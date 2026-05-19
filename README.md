@@ -32,6 +32,62 @@ npm run dev
 
 ---
 
+## Handoff — 2026-05-19
+
+### What was worked on
+
+This session focused entirely on refining the gesture-to-countdown interaction and the countdown UI/audio. Here is a full account of what was discussed, what was tried, and where things landed.
+
+#### Gesture detection during countdown
+
+**The goal:** Once a user makes a fist, the countdown should start immediately — even with the hand still visible in frame — and nothing should interrupt it.
+
+**What was tried (in order):**
+
+1. **Removed open-palm cancel** — The original code cancelled the countdown if an open palm was detected during it. This was removed, but it left no way to cancel at all, which wasn't the intent.
+2. **Grace-period approach (1500 ms)** — Added back open-palm cancel but ignored it for the first 1.5 seconds after the fist. This failed: after 1.5 s, any natural hand pose resembling an open palm would instantly cancel the countdown. Users experienced the countdown as never starting while their hand was in frame.
+3. **Sustained open-palm debounce (1 second hold)** — Required open palm to be continuously detected for 1 full second to cancel. Still didn't resolve the user's experience.
+4. **Disable all gesture detection during countdown** — `enabled: isReady && gestureState !== "countdown"` in `useGestureDetection`. This was confirmed working. The countdown starts immediately on fist, the hand can stay in frame freely, and nothing interrupts the shot.
+
+**Final decision:** All gesture inputs — including open palm — are completely disabled the moment the fist triggers the countdown. There is no way to cancel once the countdown starts. The photo will always be taken.
+
+**Key files changed:**
+- `src/screens/CameraScreen.tsx` — `enabled` prop on `useGestureDetection` gates off during countdown; hand skeleton `visible` prop also gated off during countdown; countdown state block removed from the gesture state machine.
+- `src/hooks/useGestureDetection.ts` — No changes; the `enabled` flag already stops the rAF detection loop cleanly.
+
+#### Countdown UI
+
+- Circular SVG progress arc removed entirely.
+- Countdown number: **210px, bold, Inter**.
+- Bottom label reads "Pose for the picture" during countdown.
+
+#### Countdown audio
+
+- Each tick: **440 Hz sine wave, 1-second exponential decay**.
+- Shutter sound on zero: unchanged (brief ascending chirp).
+
+---
+
+### State of the codebase
+
+The gesture state machine has three states: `waiting` → `calibrated` → `countdown`.
+
+- **`waiting`**: No detection acting. Waiting for an open palm to calibrate.
+- **`calibrated`**: Open palm pans/tilts the frame. Closed fist transitions to `countdown`.
+- **`countdown`**: Gesture detection is fully off. `CountdownOverlay` runs a 5-second rAF loop, plays a tick each second, fires `onComplete` at zero which calls `captureFrame()` and transitions to the capture screen.
+
+After capture the user can retake (returns to `camera` screen, resets to `waiting`) or save (goes to `thankyou` screen).
+
+---
+
+### Suggested next steps
+
+- Consider adding a visual or audio cue right when the fist is detected (before the first tick) so users get immediate feedback that the countdown has started.
+- The `detectOpenPalm` classifier is fairly broad (any pose with all four fingertips above their MCP knuckles). If users frequently trigger it accidentally during calibration, tightening the threshold or adding a confidence buffer could help.
+- The pan/tilt calibration resets every time the user returns from a retake. If that feels disruptive, the calibration position could be persisted across retakes.
+
+---
+
 ## Changelog
 
 ### 2026-05-19
