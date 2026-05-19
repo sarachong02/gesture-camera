@@ -28,7 +28,7 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
   const [countdownActive, setCountdownActive] = useState(false);
 
   const { gesture, palmPosition, landmarksRef, isLoading, error: gestureError } =
-    useGestureDetection({ videoRef, enabled: isReady });
+    useGestureDetection({ videoRef, enabled: isReady && gestureState !== "countdown" });
 
   // ── Gesture state machine ─────────────────────────────────────────────────
   useEffect(() => {
@@ -53,13 +53,8 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
       }
     }
 
-    if (gestureState === "countdown") {
-      if (gesture === "open_palm") {
-        setCountdownActive(false);
-        setGestureState("calibrated");
-      }
-    }
   }, [gesture, gestureState, palmPosition, countdownActive]);
+
 
   // ── Capture ───────────────────────────────────────────────────────────────
   const handleCountdownComplete = useCallback(() => {
@@ -99,7 +94,7 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
         <HandOverlay
           landmarksRef={landmarksRef}
           gestureState={gestureState}
-          visible={gestureState !== "waiting" && !isLoading && isReady}
+          visible={gestureState !== "waiting" && gestureState !== "countdown" && !isLoading && isReady}
         />
       </div>
 
@@ -147,13 +142,7 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
 
       {/* ── Countdown ─────────────────────────────────────────────────────── */}
       {countdownActive && (
-        <CountdownOverlay
-          onComplete={handleCountdownComplete}
-          onCancel={() => {
-            setCountdownActive(false);
-            setGestureState("calibrated");
-          }}
-        />
+        <CountdownOverlay onComplete={handleCountdownComplete} />
       )}
 
       {/* ── Gesture feedback ──────────────────────────────────────────────── */}

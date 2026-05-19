@@ -17,7 +17,7 @@ export default function GestureFeedback({ gesture, gestureState }: Props) {
       return "No hand detected";
     }
     if (gestureState === "countdown") {
-      return "Open palm to cancel";
+      return "Pose for the picture";
     }
     return "";
   }

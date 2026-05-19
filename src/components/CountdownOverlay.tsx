@@ -33,10 +33,8 @@ function playTone(frequency: number, durationSec: number, volume = 0.22) {
   });
 }
 
-// Tick beep — pitch rises on the final second to build anticipation
-function playTick(count: number) {
-  const freq = count === 1 ? 660 : 440; // A4 standard, E5 on last second
-  playTone(freq, 0.08);
+function playTick() {
+  playTone(440, 1.0);
 }
 
 // Shutter sound — brief ascending chirp to mimic a camera click
@@ -64,15 +62,10 @@ function playShutter() {
 
 interface Props {
   onComplete: () => void;
-  onCancel: () => void;
 }
 
-// SVG circle circumference for r=40: 2π×40 ≈ 251.2
-const CIRCUMFERENCE = 251.2;
-
 export default function CountdownOverlay({ onComplete }: Props) {
-  const [count, setCount]       = useState(5);
-  const [progress, setProgress] = useState(0);
+  const [count, setCount] = useState(5);
 
   useEffect(() => {
     if (count === 0) {
@@ -81,8 +74,7 @@ export default function CountdownOverlay({ onComplete }: Props) {
       return;
     }
 
-    // Beep at the start of each second
-    playTick(count);
+    playTick();
 
     // Animate the arc within this second using rAF
     let start: number | null = null;
@@ -91,11 +83,9 @@ export default function CountdownOverlay({ onComplete }: Props) {
     function tick(ts: number) {
       if (start === null) start = ts;
       const elapsed = ts - start;
-      setProgress(Math.min(elapsed / 1000, 1));
       if (elapsed < 1000) {
         raf = requestAnimationFrame(tick);
       } else {
-        setProgress(0);
         setCount((c) => c - 1);
       }
     }
@@ -104,38 +94,19 @@ export default function CountdownOverlay({ onComplete }: Props) {
     return () => cancelAnimationFrame(raf);
   }, [count, onComplete]);
 
-  // strokeDashoffset: 0 = full arc, CIRCUMFERENCE = empty
-  const dashOffset = CIRCUMFERENCE * progress;
-
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <div className="absolute inset-0 bg-black/30" />
 
       <div className="relative z-10 flex flex-col items-center gap-4">
-        <svg width="120" height="120" className="-rotate-90">
-          <circle
-            cx="60" cy="60" r="40"
-            fill="none"
-            stroke="rgba(255,255,255,0.1)"
-            strokeWidth="3"
-          />
-          <circle
-            cx="60" cy="60" r="40"
-            fill="none"
-            stroke="white"
-            strokeWidth="3"
-            strokeDasharray={CIRCUMFERENCE}
-            strokeDashoffset={dashOffset}
-            strokeLinecap="round"
-            style={{ transition: "stroke-dashoffset 0.05s linear" }}
-          />
-        </svg>
-
-        <span className="absolute text-white text-5xl font-light tabular-nums">
+        <span
+          className="text-white tabular-nums"
+          style={{ fontSize: 210, fontFamily: "Inter, sans-serif", fontWeight: 700, lineHeight: 1 }}
+        >
           {count}
         </span>
 
-        <p className="text-white/50 text-xs tracking-widest uppercase mt-16">
+        <p className="text-white/50 text-xs tracking-widest uppercase">
           Hold still
         </p>
       </div>
