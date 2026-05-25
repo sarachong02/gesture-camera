@@ -27,8 +27,10 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
 
   const [countdownActive, setCountdownActive] = useState(false);
 
-  const { gesture, palmPosition, landmarksRef, isLoading, error: gestureError } =
-    useGestureDetection({ videoRef, enabled: isReady && gestureState !== "countdown" });
+  // Gesture detection is always enabled when camera is ready.
+  // The hook itself restricts to open-palm-only during countdown state.
+  const { gesture, palmPosition, landmarksRef, isLoading, error: gestureError, peaceSignProgress } =
+    useGestureDetection({ videoRef, enabled: isReady, gestureState });
 
   // ── Gesture state machine ─────────────────────────────────────────────────
   useEffect(() => {
@@ -40,6 +42,7 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
     }
 
     if (gestureState === "calibrated") {
+      // Pan/tilt the frame while the user pans with an open palm
       if (gesture === "open_palm" && palmPosition && calibrationRef.current) {
         const dx = palmPosition.x - calibrationRef.current.x;
         const dy = palmPosition.y - calibrationRef.current.y;
@@ -47,13 +50,22 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
         setPanY( dy * TILT_SCALE);
       }
 
-      if (gesture === "closed_fist" && !countdownActive) {
+      // Trigger countdown after holding peace sign for PEACE_HOLD_MS
+      if (gesture === "peace_sign" && peaceSignProgress >= 1 && !countdownActive) {
         setCountdownActive(true);
         setGestureState("countdown");
       }
     }
 
-  }, [gesture, gestureState, palmPosition, countdownActive]);
+    if (gestureState === "countdown" && countdownActive) {
+      // Open palm is the only intentional cancel signal during countdown
+      if (gesture === "open_palm") {
+        setCountdownActive(false);
+        setGestureState("calibrated");
+      }
+    }
+
+  }, [gesture, gestureState, palmPosition, peaceSignProgress, countdownActive]);
 
 
   // ── Capture ───────────────────────────────────────────────────────────────
@@ -140,6 +152,37 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
         </div>
       )}
 
+      {/* ── Peace sign hold progress indicator ───────────────────────────── */}
+      {gestureState === "calibrated" && gesture === "peace_sign" && peaceSignProgress > 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="relative w-28 h-28">
+            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+              <circle
+                cx="50" cy="50" r="44"
+                fill="none"
+                stroke="rgba(255,255,255,0.08)"
+                strokeWidth="5"
+              />
+              <circle
+                cx="50" cy="50" r="44"
+                fill="none"
+                stroke="#4ade80"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 44}`}
+                strokeDashoffset={`${2 * Math.PI * 44 * (1 - peaceSignProgress)}`}
+                style={{ transition: "stroke-dashoffset 0.1s linear" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-white/60 text-xs tracking-widest uppercase">
+                {peaceSignProgress >= 1 ? "Go!" : `${Math.ceil(3 * (1 - peaceSignProgress))}s`}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Countdown ─────────────────────────────────────────────────────── */}
       {countdownActive && (
         <CountdownOverlay onComplete={handleCountdownComplete} />
@@ -147,7 +190,11 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
 
       {/* ── Gesture feedback ──────────────────────────────────────────────── */}
       {!isLoading && isReady && (
-        <GestureFeedback gesture={gesture} gestureState={gestureState} />
+        <GestureFeedback
+          gesture={gesture}
+          gestureState={gestureState}
+          peaceSignProgress={peaceSignProgress}
+        />
       )}
     </div>
   );

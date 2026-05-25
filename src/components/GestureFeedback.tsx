@@ -3,18 +3,23 @@ import type { DetectedGesture, GestureState } from "../types";
 interface Props {
   gesture: DetectedGesture;
   gestureState: GestureState;
+  peaceSignProgress: number;
 }
 
-export default function GestureFeedback({ gesture, gestureState }: Props) {
+export default function GestureFeedback({ gesture, gestureState, peaceSignProgress }: Props) {
   function getLabel(): string {
     if (gestureState === "waiting") {
       if (gesture === "open_palm") return "Calibration Complete";
       return "Show open palm to begin";
     }
     if (gestureState === "calibrated") {
-      if (gesture === "closed_fist") return "Make a fist · countdown starts";
-      if (gesture === "open_palm")   return "Move hand to frame";
-      return "No hand detected";
+      if (gesture === "peace_sign") {
+        if (peaceSignProgress >= 1) return "Starting countdown…";
+        const secs = Math.ceil(3 * (1 - peaceSignProgress));
+        return `Hold peace sign · ${secs}s`;
+      }
+      if (gesture === "open_palm") return "Move hand to frame";
+      return "Hold peace sign to start";
     }
     if (gestureState === "countdown") {
       return "Pose for the picture";
@@ -23,8 +28,8 @@ export default function GestureFeedback({ gesture, gestureState }: Props) {
   }
 
   function getDotColor(): string {
-    if (gesture === "open_palm")   return "bg-green-400";
-    if (gesture === "closed_fist") return "bg-amber-400";
+    if (gesture === "open_palm")  return "bg-green-400";
+    if (gesture === "peace_sign") return "bg-green-400";
     return "bg-white/20";
   }
 
