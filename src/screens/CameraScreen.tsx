@@ -1,22 +1,23 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type React from "react";
-import type { GestureState, PalmPosition, PhotoType } from "../types";
+import type { FilterId, GestureState, PalmPosition } from "../types";
 import { useCamera } from "../hooks/useCamera";
 import { useGestureDetection } from "../hooks/useGestureDetection";
 import CountdownOverlay from "../components/CountdownOverlay";
 import GestureFeedback from "../components/GestureFeedback";
 import HandOverlay from "../components/HandOverlay";
+import { FILTER_OVERLAYS, compositeWithOverlay } from "../filterOverlays";
 
 const BASE_SCALE  = 1.15;
 const PAN_SCALE   = 180;
 const TILT_SCALE  = 120;
 
 interface Props {
-  photoType: PhotoType;
+  activeFilter: FilterId;
   onCapture: (dataUrl: string) => void;
 }
 
-export default function CameraScreen({ photoType, onCapture }: Props) {
+export default function CameraScreen({ activeFilter, onCapture }: Props) {
   const { videoRef, isReady, error: cameraError, captureFrame } = useCamera();
   const [gestureState, setGestureState] = useState<GestureState>("waiting");
 
@@ -69,11 +70,19 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
 
 
   // ── Capture ───────────────────────────────────────────────────────────────
-  const handleCountdownComplete = useCallback(() => {
+  const handleCountdownComplete = useCallback(async () => {
     setCountdownActive(false);
-    const dataUrl = captureFrame();
-    if (dataUrl) onCapture(dataUrl);
-  }, [captureFrame, onCapture]);
+    const rawDataUrl = captureFrame();
+    if (!rawDataUrl) return;
+
+    const overlayUrl = FILTER_OVERLAYS[activeFilter];
+    if (overlayUrl) {
+      const composited = await compositeWithOverlay(rawDataUrl, overlayUrl);
+      onCapture(composited);
+    } else {
+      onCapture(rawDataUrl);
+    }
+  }, [captureFrame, onCapture, activeFilter]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   const error = cameraError ?? gestureError;
@@ -110,6 +119,16 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
         />
       </div>
 
+      {/* ── Border overlay (fixed, not subject to pan/tilt) ──────────────── */}
+      {FILTER_OVERLAYS[activeFilter] && (
+        <img
+          src={FILTER_OVERLAYS[activeFilter]}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          aria-hidden
+        />
+      )}
+
       {/* ── Loading ───────────────────────────────────────────────────────── */}
       {(isLoading || !isReady) && (
         <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-4 animate-fade-in">
@@ -125,15 +144,6 @@ export default function CameraScreen({ photoType, onCapture }: Props) {
         <div className="absolute top-8 left-1/2 -translate-x-1/2 glass-dark rounded-full px-6 py-2 animate-fade-in">
           <p className="text-green-300 text-xs tracking-widest uppercase">
             Calibration Complete
-          </p>
-        </div>
-      )}
-
-      {/* ── Photo type badge ──────────────────────────────────────────────── */}
-      {!isLoading && isReady && (
-        <div className="absolute top-8 right-8 glass-dark rounded-full px-4 py-1.5">
-          <p className="text-white/40 text-xs tracking-wide">
-            {photoType === "physical" ? "Digital + Physical · $2" : "Digital"}
           </p>
         </div>
       )}

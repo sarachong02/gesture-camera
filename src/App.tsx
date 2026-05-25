@@ -1,24 +1,27 @@
 import { useState } from "react";
-import type { AppScreen, PhotoType } from "./types";
+import type { AppScreen, FilterId } from "./types";
 import StartScreen from "./screens/StartScreen";
-import ChoiceScreen from "./screens/ChoiceScreen";
-import CostScreen from "./screens/CostScreen";
+import PhoneScreen from "./screens/PhoneScreen";
+import FilterScreen from "./screens/FilterScreen";
+import TutorialScreen from "./screens/TutorialScreen";
 import CameraScreen from "./screens/CameraScreen";
 import CaptureScreen from "./screens/CaptureScreen";
 import ThankYouScreen from "./screens/ThankYouScreen";
 
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>("start");
-  const [photoType, setPhotoType] = useState<PhotoType>("digital");
+  const [_phoneNumber, setPhoneNumber] = useState<string>("");
+  const [activeFilter, setActiveFilter] = useState<FilterId>("orca");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
-  function handlePhotoTypeSelect(type: PhotoType) {
-    setPhotoType(type);
-    if (type === "physical") {
-      setScreen("cost");
-    } else {
-      setScreen("camera");
-    }
+  function handlePhoneSubmit(phone: string) {
+    setPhoneNumber(phone);
+    setScreen("filter");
+  }
+
+  function handleFilterConfirm(filter: FilterId) {
+    setActiveFilter(filter);
+    setScreen("tutorial");
   }
 
   function handleCapture(dataUrl: string) {
@@ -34,17 +37,27 @@ export default function App() {
   return (
     <div className="w-full h-full relative overflow-hidden">
       {screen === "start" && (
-        <StartScreen onStart={() => setScreen("choice")} />
+        <StartScreen onStart={() => setScreen("phone")} />
       )}
-      {screen === "choice" && (
-        <ChoiceScreen onSelect={handlePhotoTypeSelect} />
+      {screen === "phone" && (
+        <PhoneScreen onSubmit={handlePhoneSubmit} />
       )}
-      {screen === "cost" && (
-        <CostScreen onContinue={() => setScreen("camera")} />
+      {screen === "filter" && (
+        <FilterScreen
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          onConfirm={handleFilterConfirm}
+        />
+      )}
+      {screen === "tutorial" && (
+        <TutorialScreen
+          onComplete={() => setScreen("camera")}
+          onSkip={() => setScreen("camera")}
+        />
       )}
       {screen === "camera" && (
         <CameraScreen
-          photoType={photoType}
+          activeFilter={activeFilter}
           onCapture={handleCapture}
         />
       )}

@@ -33,7 +33,7 @@ npm run dev
 
 ---
 
-## Handoff — 2026-05-24
+## Handoff — 2026-05-24 (Session 2)
 
 ### What was worked on
 
@@ -115,6 +115,87 @@ After capture the user can retake (returns to `camera` screen, resets to `waitin
 
 ---
 
+---
+
+## Handoff — 2026-05-24 (Session 3)
+
+### What was worked on
+
+Reworked the onboarding start flow: removed the photo-type selection screen, added a phone number step, a live-preview filter selection step with real border images, and a step-by-step tutorial screen.
+
+---
+
+#### Change 1 — Remove Digital / Digital + Physical selection
+
+**Removed** the choice screen and cost screen entirely. `PhotoType` and the `"choice"` / `"cost"` app states are gone. `ChoiceScreen.tsx` and `CostScreen.tsx` deleted.
+
+---
+
+#### Change 2 — Phone number screen
+
+Added `PhoneScreen` as the second step (after Start).
+
+- Numeric input auto-formats to `(xxx) xxx-xxxx`; Continue is disabled until 10 digits are entered.
+- Privacy copy: *"Your photo will be texted to this number and deleted immediately after the session."*
+- Phone number stored in `App` state (`_phoneNumber`). No SMS backend yet.
+
+**Key files:**
+- `src/screens/PhoneScreen.tsx` — new
+- `src/App.tsx` — `_phoneNumber` state; routes Start → phone
+
+---
+
+#### Change 3 — Filter selection with live camera preview
+
+Added `FilterScreen` as the third step (after phone).
+
+- Full-screen live camera preview starts immediately when the screen mounts (using `useCamera`).
+- Selecting a filter overlays the corresponding border image on the live feed in real time so users can frame themselves before choosing.
+- Touch-friendly filter cards at the bottom; thumbnail of the border image is shown in each card.
+- Orca and Harbor Seal have real border images. Geoduck Clam and Giant Pacific Octopus are placeholders (disabled, labelled "Soon").
+- Selected border **persists into the captured photo** — `CameraScreen` renders the overlay during the live view, and `compositeWithOverlay` canvas-composites it onto the raw frame at capture time.
+
+**`images/` folder** — border PNGs live here (not in `public/`); Vite imports them as bundled asset URLs:
+- `orca_background.png` → mapped to filter id `"orca"`
+- `seal_background.png` → mapped to filter id `"harbor_seal"`
+
+**Key files:**
+- `src/screens/FilterScreen.tsx` — new (replaces static picker)
+- `src/filterOverlays.ts` — new; imports PNGs, exports `FILTER_OVERLAYS` map and `compositeWithOverlay`
+- `src/vite-env.d.ts` — new; adds `/// <reference types="vite/client" />` so TypeScript understands PNG imports
+- `src/screens/CameraScreen.tsx` — `photoType` prop replaced with `activeFilter: FilterId`; border overlay `<img>` added (fixed, outside pan/tilt div); `handleCountdownComplete` made async to composite overlay before calling `onCapture`
+- `src/types.ts` — `PhotoType` removed; `FilterId`, `FilterOption`, `FILTERS` constant added
+
+---
+
+#### Change 4 — Tutorial screen
+
+Added `TutorialScreen` between filter selection and the camera (step 4 of 5 in the start flow).
+
+- Four steps shown one at a time (progressive disclosure):
+  1. **Calibrate** — open palm illustration + explanation
+  2. **Start Countdown** — peace sign illustration + explanation
+  3. **During Countdown** — countdown numbers; explains normal poses won't cancel
+  4. **Cancel Countdown** — open palm again; explains deliberate cancel gesture
+- Pill-shaped step dots (active dot widens to a pill); Back / Next navigation; "Let's Go" on the final step.
+- **Skip Tutorial** button (top right) bypasses all steps and goes directly to the camera.
+- Gesture illustrations are inline SVGs styled to match the app's white-on-dark aesthetic, reusing the circular ring container pattern from the Start screen.
+
+**Key files:**
+- `src/screens/TutorialScreen.tsx` — new
+- `src/App.tsx` — `"tutorial"` added to `AppScreen`; filter confirm now routes → tutorial → camera
+- `src/types.ts` — `"tutorial"` added to `AppScreen`
+
+---
+
+### Updated start flow
+
+```
+Start → Phone number → Filter selection → Tutorial → Camera → Capture → Thank you
+```
+
+---
+
 ### Suggested next steps
 
 - The `peaceSignProgress >= 1` trigger in the gesture state machine fires once and immediately starts the countdown; if a user accidentally holds a peace sign while framing, the 3-second hold is intentional enough that this is rarely an issue — but a visual "ready" flash on the arc completion could reinforce that the countdown has started.
@@ -126,7 +207,16 @@ After capture the user can retake (returns to `camera` screen, resets to `waitin
 
 ## Changelog
 
-### 2026-05-24
+### 2026-05-24 (Session 3)
+
+- **Removed photo-type selection** — Digital / Digital + Physical choice screen eliminated. `ChoiceScreen`, `CostScreen`, and `PhotoType` are gone.
+- **Phone number step** — new second screen; auto-formats input, validates 10 digits, stores number in app state for future SMS integration.
+- **Filter selection with live preview** — new third screen; camera starts immediately so users can frame themselves while selecting a border. Orca and Harbor Seal have real PNG overlays; others are placeholders.
+- **Border overlay in final photo** — selected filter is composited onto the captured frame via canvas at shutter time, and shown as a fixed overlay in the live camera view.
+- **`images/` folder** — `orca_background.png` and `seal_background.png` added; imported as Vite asset URLs via `src/filterOverlays.ts`.
+- **Tutorial screen** — new fourth screen; four steps with progressive disclosure, Back/Next navigation, step-dot indicator, and a Skip Tutorial shortcut.
+
+### 2026-05-24 (Session 2)
 
 - **Peace sign trigger** — closed fist replaced with a peace sign held for 3 continuous seconds. Progress arc shows hold time; timer resets immediately if the sign breaks.
 - **Open palm cancel** — open palm during countdown cancels and returns to calibrated state. A 1500 ms suppression window at countdown start prevents the peace-sign pose from false-triggering cancel.

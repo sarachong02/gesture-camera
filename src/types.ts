@@ -1,6 +1,18 @@
-export type AppScreen = "start" | "choice" | "cost" | "camera" | "capture" | "thankyou";
+export type AppScreen = "start" | "phone" | "filter" | "tutorial" | "camera" | "capture" | "thankyou";
 
-export type PhotoType = "digital" | "physical";
+export type FilterId = "orca" | "harbor_seal" | "geoduck_clam" | "giant_pacific_octopus";
+
+export interface FilterOption {
+  id: FilterId;
+  label: string;
+}
+
+export const FILTERS: FilterOption[] = [
+  { id: "orca", label: "Orca" },
+  { id: "harbor_seal", label: "Harbor Seal" },
+  { id: "geoduck_clam", label: "Geoduck Clam" },
+  { id: "giant_pacific_octopus", label: "Giant Pacific Octopus" },
+];
 
 export type GestureState =
   | "waiting"      // waiting for open palm to calibrate
