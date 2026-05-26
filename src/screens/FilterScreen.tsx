@@ -11,6 +11,7 @@ interface Props {
 }
 
 const FILTER_EMOJI: Record<FilterId, string> = {
+  no_filter: "—",
   orca: "🐋",
   harbor_seal: "🦭",
   geoduck_clam: "🐚",
@@ -62,31 +63,34 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
           <div className="flex gap-3">
             {FILTERS.map((filter) => {
               const filterOverlay = FILTER_OVERLAYS[filter.id];
-              const hasOverlay = !!filterOverlay;
-              const isActive = activeFilter === filter.id;
+              const hasOverlay    = !!filterOverlay;
+              const isNoFilter    = filter.id === "no_filter";
+              const isEnabled     = hasOverlay || isNoFilter;
+              const isActive      = activeFilter === filter.id;
 
               return (
                 <button
                   key={filter.id}
-                  onClick={() => { if (hasOverlay) onFilterChange(filter.id); }}
-                  disabled={!hasOverlay}
+                  onClick={() => { if (isEnabled) onFilterChange(filter.id); }}
+                  disabled={!isEnabled}
                   className={`relative flex flex-col items-center gap-2 px-3 pt-2.5 pb-3 rounded-2xl min-w-[80px] transition-all duration-200 select-none
                     ${isActive
                       ? "bg-white/20 border border-white/60 text-white"
-                      : hasOverlay
+                      : isEnabled
                         ? "bg-black/50 border border-white/15 text-white/55 active:bg-white/10"
                         : "bg-black/30 border border-white/5 text-white/20 cursor-not-allowed"
                     }
                   `}
                 >
-                  {/* Border thumbnail or emoji */}
+                  {/* Border thumbnail */}
                   <div className="w-14 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-black/30">
                     {hasOverlay ? (
-                      <img
-                        src={filterOverlay}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={filterOverlay} alt="" className="w-full h-full object-cover" />
+                    ) : isNoFilter ? (
+                      <svg viewBox="0 0 56 40" className="w-full h-full opacity-25" fill="none">
+                        <line x1="8" y1="6" x2="48" y2="34" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                        <line x1="48" y1="6" x2="8" y2="34" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
                     ) : (
                       <span className="text-2xl">{FILTER_EMOJI[filter.id]}</span>
                     )}
@@ -96,7 +100,7 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
                     {filter.label}
                   </span>
 
-                  {!hasOverlay && (
+                  {!isEnabled && (
                     <span className="absolute top-1.5 right-2 text-[9px] tracking-wider text-white/25 uppercase">
                       Soon
                     </span>

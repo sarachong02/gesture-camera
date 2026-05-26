@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { OpenPalmIcon, PeaceSignIcon, ThumbsUpIcon } from "../components/GestureIcons";
 
 interface Props {
   onComplete: () => void;
@@ -9,44 +10,6 @@ interface Step {
   title: string;
   description: string;
   illustration: React.ReactNode;
-}
-
-function OpenPalmIcon() {
-  return (
-    <svg viewBox="0 0 64 80" fill="none" className="w-20 h-24" aria-hidden>
-      {/* Palm */}
-      <rect x="10" y="42" width="44" height="32" rx="10" fill="currentColor" opacity="0.7" />
-      {/* Thumb */}
-      <rect x="4" y="34" width="11" height="22" rx="5.5" fill="currentColor" opacity="0.7" transform="rotate(-20 9.5 45)" />
-      {/* Index */}
-      <rect x="14" y="8" width="11" height="38" rx="5.5" fill="currentColor" opacity="0.7" />
-      {/* Middle */}
-      <rect x="27" y="4" width="11" height="42" rx="5.5" fill="currentColor" opacity="0.7" />
-      {/* Ring */}
-      <rect x="40" y="8" width="10" height="38" rx="5" fill="currentColor" opacity="0.7" />
-      {/* Pinky */}
-      <rect x="51" y="14" width="9" height="32" rx="4.5" fill="currentColor" opacity="0.7" />
-    </svg>
-  );
-}
-
-function PeaceSignIcon() {
-  return (
-    <svg viewBox="0 0 64 80" fill="none" className="w-20 h-24" aria-hidden>
-      {/* Palm */}
-      <rect x="10" y="42" width="44" height="32" rx="10" fill="currentColor" opacity="0.7" />
-      {/* Thumb (tucked) */}
-      <rect x="12" y="46" width="10" height="16" rx="5" fill="currentColor" opacity="0.5" />
-      {/* Index — extended */}
-      <rect x="14" y="8" width="11" height="38" rx="5.5" fill="currentColor" opacity="0.7" />
-      {/* Middle — extended */}
-      <rect x="27" y="4" width="11" height="42" rx="5.5" fill="currentColor" opacity="0.7" />
-      {/* Ring — curled */}
-      <rect x="40" y="34" width="10" height="12" rx="5" fill="currentColor" opacity="0.5" />
-      {/* Pinky — curled */}
-      <rect x="51" y="36" width="9" height="10" rx="4.5" fill="currentColor" opacity="0.5" />
-    </svg>
-  );
 }
 
 function CountdownIcon() {
@@ -73,12 +36,12 @@ const STEPS: Step[] = [
   {
     title: "Calibrate",
     description: "Hold up an open palm to calibrate the camera.",
-    illustration: <OpenPalmIcon />,
+    illustration: <OpenPalmIcon className="w-24 h-28" />,
   },
   {
     title: "Start Countdown",
     description: "Hold a peace sign for 3 seconds to start the photo countdown.",
-    illustration: <PeaceSignIcon />,
+    illustration: <PeaceSignIcon className="w-24 h-28" />,
   },
   {
     title: "During Countdown",
@@ -89,14 +52,19 @@ const STEPS: Step[] = [
   {
     title: "Cancel Countdown",
     description: "Show an open palm at any point during the countdown to cancel.",
-    illustration: <OpenPalmIcon />,
+    illustration: <OpenPalmIcon className="w-24 h-28" />,
+  },
+  {
+    title: "Start Camera",
+    description: "After the tutorial, hold a thumbs up to enter the camera and begin your session.",
+    illustration: <ThumbsUpIcon className="w-24 h-28" />,
   },
 ];
 
 export default function TutorialScreen({ onComplete, onSkip }: Props) {
   const [step, setStep] = useState(0);
   const current = STEPS[step];
-  const isLast = step === STEPS.length - 1;
+  const isLast  = step === STEPS.length - 1;
   const isFirst = step === 0;
 
   return (
@@ -115,7 +83,7 @@ export default function TutorialScreen({ onComplete, onSkip }: Props) {
       {/* Step content */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 gap-10">
 
-        {/* Illustration ring — matches StartScreen's decorative pattern */}
+        {/* Illustration ring */}
         <div className="relative flex items-center justify-center">
           <div className="w-48 h-48 rounded-full border border-white/10 flex items-center justify-center">
             <div className="w-36 h-36 rounded-full border border-white/15 flex items-center justify-center text-white">

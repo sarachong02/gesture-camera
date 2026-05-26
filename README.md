@@ -205,7 +205,100 @@ Start → Phone number → Filter selection → Tutorial → Camera → Capture 
 
 ---
 
+## Handoff — 2026-05-25 (Session 4)
+
+### What was worked on
+
+Three improvements to the onboarding flow: a default "No Filter" option, MediaPipe-style hand skeleton illustrations in the tutorial, and a thumbs-up gesture gate between the tutorial and the camera.
+
+---
+
+#### Change 1 — Default "No Filter" option
+
+Added `"no_filter"` as the first and default filter choice.
+
+- `FilterId` type now includes `"no_filter"`.
+- `FILTERS` constant starts with `{ id: "no_filter", label: "No Filter" }`.
+- App default `activeFilter` changed from `"orca"` to `"no_filter"`.
+- `FilterScreen` treats `"no_filter"` as always-enabled (alongside filters that have real overlay images). Its thumbnail shows a small ×-pattern SVG to communicate "no border". The "Soon" badge is suppressed for it.
+- `CameraScreen` already handled missing overlays via a conditional render — no changes needed there.
+
+**Key files changed:**
+- `src/types.ts` — `"no_filter"` added to `FilterId`; `FILTERS` prepended with No Filter entry
+- `src/App.tsx` — default `activeFilter` changed to `"no_filter"`
+- `src/screens/FilterScreen.tsx` — `isEnabled` logic updated; No Filter thumbnail added
+
+---
+
+#### Change 2 — MediaPipe-style gesture illustrations in tutorial
+
+Replaced the filled-rectangle SVG hand icons with proper landmark skeleton drawings that match the live `HandOverlay` style.
+
+- New shared component `GestureIcons.tsx` defines 21 landmark positions per gesture and renders them using the same MediaPipe connection topology as `HandOverlay.tsx`: connection lines (white, 1.5 px, rounded caps) and joint circles (larger at fingertips and MCPs).
+- Three icons: **OpenPalmIcon** (all fingers extended), **PeaceSignIcon** (index + middle extended, ring + pinky curled), **ThumbsUpIcon** (thumb extended upward, four fingers curled into fist).
+- `TutorialScreen` imports from `GestureIcons` and adds a **fifth step** — "Start Camera" — that shows the `ThumbsUpIcon` and explains the thumbs-up camera gate before the user reaches it.
+
+**Key files changed:**
+- `src/components/GestureIcons.tsx` — new; exports `OpenPalmIcon`, `PeaceSignIcon`, `ThumbsUpIcon`
+- `src/screens/TutorialScreen.tsx` — imports skeleton icons; adds step 5 (thumbs-up/Start Camera)
+
+---
+
+#### Change 3 — Thumbs-up camera start gate
+
+After the user taps "Let's Go" on the final tutorial step, instead of navigating directly to the camera they land on a gate screen that requires a thumbs-up gesture to proceed. Skipping the tutorial still goes directly to the camera.
+
+**Gate screen (`CameraGateScreen`):**
+- Shows the `ThumbsUpIcon` illustration inside the same double-ring container used throughout onboarding.
+- A circular SVG progress arc fills as the thumbs-up is held; navigates to the camera when it completes (~800 ms hold).
+- Accessible fallback: a **"Start Camera"** button that navigates immediately without gesture detection.
+- An offscreen (1 px × 1 px, opacity 0) video element feeds MediaPipe for detection without any visible camera preview.
+
+**Gesture detection (`useThumbsUpDetection`):**
+- Separate, minimal hook — does not touch `useGestureDetection` or the camera-screen state machine.
+- Detection criterion: `lm[4].y < lm[2].y` (thumb tip clearly above MCP) AND all four fingertip Y-values exceed their PIP Y-values (fingers curled). Robust against open palm, peace sign, and closed fist.
+- Fires `onDetected` exactly once after 800 ms of continuous hold via a `firedRef` guard.
+
+**Routing:**
+- `"camera_gate"` added to `AppScreen`.
+- `TutorialScreen.onComplete` → `"camera_gate"` (was `"camera"`).
+- `TutorialScreen.onSkip` → `"camera"` (unchanged — skip bypasses the gate).
+- Thumbs-up gesture is **only** used in `useThumbsUpDetection`; the main camera-screen state machine is untouched.
+
+**Key files:**
+- `src/screens/CameraGateScreen.tsx` — new
+- `src/hooks/useThumbsUpDetection.ts` — new
+- `src/types.ts` — `"camera_gate"` added to `AppScreen`
+- `src/App.tsx` — `"camera_gate"` screen wired; `CameraGateScreen` imported
+
+---
+
+### Updated start flow
+
+```
+Start → Phone number → Filter selection → Tutorial → Camera gate (thumbs up) → Camera → Capture → Thank you
+                                                    ↑ Skip Tutorial bypasses gate ──────────────────┘
+```
+
+---
+
+### Suggested next steps
+
+- The thumbs-up hold threshold is 800 ms. If it feels too slow in noisy lighting, lowering to ~500 ms should still feel intentional.
+- `CameraGateScreen` starts a fresh MediaPipe instance on mount. If load time is noticeable on the device, the landmarker could be initialized during the tutorial steps (while the user is reading) so it's ready by the time they tap "Let's Go".
+- The gate screen has no camera preview — users can't see themselves while forming the thumbs-up. Adding a small mirrored preview (similar to `FilterScreen`) could help if users struggle with gesture recognition in practice.
+- The No Filter option has a placeholder × thumbnail. A real "clean frame" preview image could be added to `images/` and mapped in `filterOverlays.ts` to make the picker feel visually consistent.
+
+---
+
 ## Changelog
+
+### 2026-05-25 (Session 4)
+
+- **"No Filter" default** — added as first filter option; app now defaults to no border overlay. `FilterId` type updated; thumbnail shows a ×-pattern indicator.
+- **MediaPipe-style gesture icons** — tutorial hand illustrations replaced with proper 21-landmark skeleton drawings (connection lines + joint circles) matching the live `HandOverlay` rendering style. Three icons: open palm, peace sign, thumbs up.
+- **Tutorial fifth step** — "Start Camera" step added to tutorial showing the thumbs-up icon and explaining the camera gate before the user encounters it.
+- **Thumbs-up camera gate** — new `CameraGateScreen` inserted between tutorial and camera; requires an 800 ms thumbs-up hold (or fallback "Start Camera" button) to proceed. "Skip Tutorial" bypasses the gate. Detection lives in a dedicated `useThumbsUpDetection` hook; main camera state machine unchanged.
 
 ### 2026-05-24 (Session 3)
 

@@ -4,6 +4,7 @@ import StartScreen from "./screens/StartScreen";
 import PhoneScreen from "./screens/PhoneScreen";
 import FilterScreen from "./screens/FilterScreen";
 import TutorialScreen from "./screens/TutorialScreen";
+import CameraGateScreen from "./screens/CameraGateScreen";
 import CameraScreen from "./screens/CameraScreen";
 import CaptureScreen from "./screens/CaptureScreen";
 import ThankYouScreen from "./screens/ThankYouScreen";
@@ -11,7 +12,7 @@ import ThankYouScreen from "./screens/ThankYouScreen";
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>("start");
   const [_phoneNumber, setPhoneNumber] = useState<string>("");
-  const [activeFilter, setActiveFilter] = useState<FilterId>("orca");
+  const [activeFilter, setActiveFilter] = useState<FilterId>("no_filter");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   function handlePhoneSubmit(phone: string) {
@@ -51,9 +52,12 @@ export default function App() {
       )}
       {screen === "tutorial" && (
         <TutorialScreen
-          onComplete={() => setScreen("camera")}
+          onComplete={() => setScreen("camera_gate")}
           onSkip={() => setScreen("camera")}
         />
+      )}
+      {screen === "camera_gate" && (
+        <CameraGateScreen onEnter={() => setScreen("camera")} />
       )}
       {screen === "camera" && (
         <CameraScreen

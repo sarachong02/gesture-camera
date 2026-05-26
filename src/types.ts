@@ -1,6 +1,6 @@
-export type AppScreen = "start" | "phone" | "filter" | "tutorial" | "camera" | "capture" | "thankyou";
+export type AppScreen = "start" | "phone" | "filter" | "tutorial" | "camera_gate" | "camera" | "capture" | "thankyou";
 
-export type FilterId = "orca" | "harbor_seal" | "geoduck_clam" | "giant_pacific_octopus";
+export type FilterId = "no_filter" | "orca" | "harbor_seal" | "geoduck_clam" | "giant_pacific_octopus";
 
 export interface FilterOption {
   id: FilterId;
@@ -8,6 +8,7 @@ export interface FilterOption {
 }
 
 export const FILTERS: FilterOption[] = [
+  { id: "no_filter", label: "No Filter" },
   { id: "orca", label: "Orca" },
   { id: "harbor_seal", label: "Harbor Seal" },
   { id: "geoduck_clam", label: "Geoduck Clam" },
