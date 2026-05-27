@@ -13,7 +13,15 @@ const MIDDLE_TIP = 12; const MIDDLE_PIP = 10;
 const RING_TIP   = 16; const RING_PIP   = 14;
 const PINKY_TIP  = 20; const PINKY_PIP  = 18;
 
+const THUMB_TIP  = 4;
+const THUMB_MCP  = 2;
+
 const PEACE_HOLD_MS = 3000;
+
+// Normalized bounding-box diagonal range used to map hand proximity → 0–1.
+// Below MIN → handSize = 0 (far away). Above MAX → handSize = 1 (very close).
+const HAND_SPAN_MIN = 0.20;
+const HAND_SPAN_MAX = 0.65;
 
 // How long after countdown starts before an open palm can cancel it.
 // This prevents the peace-sign pose from briefly triggering detectOpenPalm
@@ -42,6 +50,42 @@ function detectPeaceSign(lm: Landmark[]): boolean {
     lm[RING_TIP].y   > lm[RING_PIP].y   &&
     lm[PINKY_TIP].y  > lm[PINKY_PIP].y
   );
+}
+
+// Thumbs up: thumb tip above MCP, all 4 fingers curled
+function detectThumbsUp(lm: Landmark[]): boolean {
+  return (
+    lm[THUMB_TIP].y  < lm[THUMB_MCP].y  &&
+    lm[INDEX_TIP].y  > lm[INDEX_PIP].y   &&
+    lm[MIDDLE_TIP].y > lm[MIDDLE_PIP].y  &&
+    lm[RING_TIP].y   > lm[RING_PIP].y    &&
+    lm[PINKY_TIP].y  > lm[PINKY_PIP].y
+  );
+}
+
+// Thumbs down: thumb tip below MCP, all 4 fingers curled
+function detectThumbsDown(lm: Landmark[]): boolean {
+  return (
+    lm[THUMB_TIP].y  > lm[THUMB_MCP].y  &&
+    lm[INDEX_TIP].y  > lm[INDEX_PIP].y   &&
+    lm[MIDDLE_TIP].y > lm[MIDDLE_PIP].y  &&
+    lm[RING_TIP].y   > lm[RING_PIP].y    &&
+    lm[PINKY_TIP].y  > lm[PINKY_PIP].y
+  );
+}
+
+// Bounding-box diagonal of all 21 landmarks — scales with hand proximity to camera
+function getHandSpan(lm: Landmark[]): number {
+  let minX = 1, maxX = 0, minY = 1, maxY = 0;
+  for (const p of lm) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const w = maxX - minX;
+  const h = maxY - minY;
+  return Math.sqrt(w * w + h * h);
 }
 
 // Palm center = average of wrist + four MCP knuckles
@@ -78,6 +122,8 @@ interface GestureDetectionState {
   error: string | null;
   /** 0–1: how long the peace sign has been continuously held (relative to PEACE_HOLD_MS) */
   peaceSignProgress: number;
+  /** 0–1: normalized hand proximity (0 = far/absent, 1 = very close to camera) */
+  handSize: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,13 +139,15 @@ export function useGestureDetection({
   const [isLoading, setIsLoading]       = useState(true);
   const [error, setError]               = useState<string | null>(null);
   const [peaceSignProgress, setPeaceSignProgress] = useState(0);
+  const [handSize, setHandSize]                   = useState(0);
 
   const landmarkerRef     = useRef<HandLandmarkerInstance>(null);
   const landmarksRef      = useRef<Landmark[] | null>(null);
   const rafRef            = useRef<number>(0);
   const lastVideoTimeRef  = useRef<number>(-1);
   const positionBufferRef = useRef<PalmPosition[]>([]);
-  const peaceSignStartRef = useRef<number | null>(null);
+  const peaceSignStartRef  = useRef<number | null>(null);
+  const handSpanBufferRef  = useRef<number[]>([]);
 
   // Proximity-based hand lock: position of the last-selected hand.
   // When multiple hands are in frame, we always pick the one closest to this.
@@ -252,6 +300,14 @@ export function useGestureDetection({
           landmarksRef.current = lm;
           setPalmPosition(smoothPosition(rawCenter));
 
+          // Smooth hand proximity for zoom control (skipped during countdown
+          // for the same reason palmPosition is skipped — avoids re-renders
+          // that would destabilise handleCountdownComplete).
+          handSpanBufferRef.current.push(getHandSpan(lm));
+          if (handSpanBufferRef.current.length > 5) handSpanBufferRef.current.shift();
+          const avgSpan = handSpanBufferRef.current.reduce((a, b) => a + b, 0) / handSpanBufferRef.current.length;
+          setHandSize(Math.max(0, Math.min(1, (avgSpan - HAND_SPAN_MIN) / (HAND_SPAN_MAX - HAND_SPAN_MIN))));
+
           if (detectPeaceSign(lm)) {
             if (peaceSignStartRef.current === null) {
               peaceSignStartRef.current = performance.now();
@@ -260,6 +316,14 @@ export function useGestureDetection({
             const progress = Math.min(elapsed / PEACE_HOLD_MS, 1);
             setPeaceSignProgress(progress);
             setGesture("peace_sign");
+          } else if (detectThumbsUp(lm)) {
+            peaceSignStartRef.current = null;
+            setPeaceSignProgress(0);
+            setGesture("thumbs_up");
+          } else if (detectThumbsDown(lm)) {
+            peaceSignStartRef.current = null;
+            setPeaceSignProgress(0);
+            setGesture("thumbs_down");
           } else if (detectOpenPalm(lm)) {
             peaceSignStartRef.current = null;
             setPeaceSignProgress(0);
@@ -275,9 +339,11 @@ export function useGestureDetection({
         // re-entry of the same user's hand is still preferred.
         landmarksRef.current = null;
         positionBufferRef.current = [];
+        handSpanBufferRef.current = [];
         peaceSignStartRef.current = null;
         setPalmPosition(null);
         setPeaceSignProgress(0);
+        setHandSize(0);
         setGesture("none");
       }
     }
@@ -291,5 +357,5 @@ export function useGestureDetection({
     return () => { cancelAnimationFrame(rafRef.current); };
   }, [enabled, isLoading, detect]);
 
-  return { gesture, palmPosition, landmarksRef, isLoading, error, peaceSignProgress };
+  return { gesture, palmPosition, landmarksRef, isLoading, error, peaceSignProgress, handSize };
 }

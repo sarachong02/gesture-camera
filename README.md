@@ -16,6 +16,10 @@ A gesture-controlled photo booth app built with React, TypeScript, and MediaPipe
 | Open palm | Calibrate / pan and tilt the frame |
 | Peace sign (held 3 s) | Start the countdown |
 | Open palm during countdown | Cancel countdown, return to calibrated |
+| Thumbs up (post-capture) | Save photo |
+| Thumbs down (post-capture) | Discard photo and retake |
+| Hand closer to camera | Zoom in (gesture-controlled zoom) |
+| Hand farther from camera | Zoom out |
 
 ## Tech Stack
 
@@ -291,7 +295,161 @@ Start → Phone number → Filter selection → Tutorial → Camera gate (thumbs
 
 ---
 
+## Handoff — 2026-05-26 (Session 5)
+
+### What was worked on
+
+Five targeted improvements: on-screen phone keypad, gesture-driven tutorial overhaul, thumbs-up/down detection in the type system and post-capture flow, a visible camera viewport in `CameraGateScreen`, and gesture-controlled zoom.
+
+---
+
+#### Change 1 — Phone number screen: on-screen numeric keypad
+
+`PhoneScreen` no longer relies on the device keyboard. An iOS-style 12-key grid (1–9, blank, 0, delete) is always visible on screen.
+
+- Keys are `h-16 rounded-2xl bg-white/10` with `active:scale-95` press feedback.
+- Delete key uses a filled backspace SVG icon; numbers are `text-2xl font-light`.
+- `handleKeyPress` guards against input exceeding 10 digits.
+- All existing logic preserved: `value` state, `formatDisplay`, `handleSubmit`, `isValid`.
+
+**Key files changed:**
+- `src/screens/PhoneScreen.tsx` — `<input>` replaced with display div + keypad grid; `handleKeyPress` added
+
+---
+
+#### Change 2 — Tutorial overhaul: gesture-gated, full-screen camera, new steps
+
+The tutorial now runs entirely through gesture detection. Manual Next/Back buttons are gone except for a Back chevron (first step hides it) and a "Skip Tutorial" pill in the bottom-right corner.
+
+**Camera viewport:** Square, `width: min(60vh, 88vw)`, `aspectRatio: 1/1`, rounded corners. Occupies roughly two-thirds of screen height.
+
+**New step list (6 steps):**
+
+| Step | Title | Required gesture |
+|---|---|---|
+| 1 | Calibrate | `open_palm` |
+| 2 | Start Countdown | `peace_sign` |
+| 3 | During Countdown | `thumbs_up` |
+| 4 | Cancel Countdown | `open_palm` |
+| 5 | Confirm & Save | `thumbs_up` |
+| 6 | Retake | `thumbs_down` |
+
+**Progression logic:**
+- 500 ms continuous correct gesture → `succeeded = true` (green overlay + checkmark).
+- 800 ms after success → auto-advance (or call `onComplete` on last step).
+- Wrong gesture or gesture drop → timer clears, no advance.
+
+**UI improvements:**
+- Title: `text-xl` → `text-2xl`; description: `text-sm` → `text-base`; feedback badge: `text-xs` → `text-sm`.
+- Instruction section gap: `gap-4` → `gap-5`.
+- Gesture reference icon shown as a badge in the camera viewport's bottom-right corner; glows green when gesture matches.
+
+**Key files changed:**
+- `src/screens/TutorialScreen.tsx` — rewritten; `STEPS` array extended; gesture-detection loop added; success/advance effects added
+
+---
+
+#### Change 3 — Thumbs up / down added to gesture pipeline
+
+`detectThumbsUp` and `detectThumbsDown` classifiers added to `useGestureDetection`. Both check that all four fingers are curled (tip Y > PIP Y) and that the thumb tip is above (`thumbs_up`) or below (`thumbs_down`) the thumb MCP.
+
+Detection order in the non-countdown branch: `peace_sign → thumbs_up → thumbs_down → open_palm → none`.
+
+`ThumbsDownIcon` added to `GestureIcons.tsx` — mathematically derived by reflecting `THUMBS_UP_LM` (`x_new = 100 - x`, `y_new = 120 - y`).
+
+**Key files changed:**
+- `src/types.ts` — `DetectedGesture` union extended with `"thumbs_up"` and `"thumbs_down"`
+- `src/hooks/useGestureDetection.ts` — `THUMB_TIP`, `THUMB_MCP` constants; `detectThumbsUp`, `detectThumbsDown`; detection order updated
+- `src/components/GestureIcons.tsx` — `THUMBS_DOWN_LM`, `ThumbsDownIcon` added
+
+---
+
+#### Change 4 — Post-capture gesture flow
+
+`CaptureScreen` now runs a hidden camera stream and `useGestureDetection` to let users save or retake via gesture after the photo is taken.
+
+- Thumbs up: 500 ms confirmation → `gestureAction = "save"` → 800 ms delay → download file + `onSave()`.
+- Thumbs down: same timing → `gestureAction = "retake"` → `onRetake()`.
+- `handleSaveRef` / `onRetakeRef` ref pattern prevents stale closures without adding timeout deps.
+- A gesture hint pill (`ThumbsDownIcon · ThumbsUpIcon`) highlights the active gesture in real time.
+- Manual Retake / Save buttons kept as accessible fallbacks.
+
+**Key files changed:**
+- `src/screens/CaptureScreen.tsx` — hidden `<video>` + `useGestureDetection` added; gesture confirm effects; hint pill; success overlay
+
+---
+
+#### Change 5 — CameraGateScreen: visible camera viewport
+
+`CameraGateScreen` previously kept the camera offscreen. Now it shows the same `min(60vh, 88vw)` square viewport used in the tutorial.
+
+- SVG progress arc overlaid on the camera fills as the thumbs-up is held.
+- `ThumbsUpIcon` badge shown in the bottom-right corner of the viewport.
+- Loading overlay displayed until MediaPipe is ready.
+
+**Key files changed:**
+- `src/screens/CameraGateScreen.tsx` — video element made visible; arc + badge overlaid
+
+---
+
+#### Change 6 — Gesture-controlled zoom
+
+Hand proximity (bounding-box diagonal of all 21 landmarks) drives camera zoom in `CameraScreen`.
+
+- `getHandSpan(lm)` computes the bounding-box diagonal of all 21 normalized landmarks.
+- `handSpanBufferRef` keeps a 5-frame rolling average for smoothing.
+- Normalized to `[HAND_SPAN_MIN = 0.20, HAND_SPAN_MAX = 0.65]` → clamped `handSize` in `[0, 1]`.
+- `zoomScale = BASE_SCALE + handSize * (ZOOM_MAX_SCALE - BASE_SCALE)` = 1.15–1.60.
+- Zoom updates suspended during countdown (same pattern as `setPalmPosition`) to prevent re-render chain that pauses the countdown timer.
+- CSS transition eased to `0.15s` for smooth zoom feel.
+
+**Key files changed:**
+- `src/hooks/useGestureDetection.ts` — `getHandSpan`, `HAND_SPAN_MIN/MAX`, `handSpanBufferRef`, `handSize` state; returned in hook result
+- `src/screens/CameraScreen.tsx` — `ZOOM_MAX_SCALE = 1.6`; `zoomScale` computed; applied to transform; transition eased
+
+---
+
+### State of the codebase (as of 2026-05-26)
+
+**Full start flow:**
+```
+Start → Phone number → Filter selection → Tutorial (6 gesture steps) → Camera gate (thumbs up) → Camera → Capture (thumbs up/down) → Thank you
+                                                                       ↑ Skip Tutorial bypasses gate ────────────────────────────────┘
+```
+
+**Gesture system in `useGestureDetection`:**
+- All four gestures (`open_palm`, `peace_sign`, `thumbs_up`, `thumbs_down`) detected in a single hook.
+- `gestureState` passed in to restrict detection during countdown (open-palm cancel only, with 1500 ms grace).
+- `handSize` (0–1) exposed for zoom; `peaceSignProgress` (0–1) exposed for arc UI.
+- `lockedPalmRef` maintains single-user tracking across multi-hand frames.
+- `landmarksRef` for zero-render-cost skeleton overlay drawing.
+- `useThumbsUpDetection` is a separate, simpler hook used only by `CameraGateScreen` — left untouched.
+
+**Re-render safety:** Neither `setPalmPosition` nor `setHandSize` is called during countdown state. This is load-bearing — calling either during countdown produces a 60 fps re-render chain that resets `CountdownOverlay`'s timer via unstable `onComplete` reference.
+
+---
+
+### Suggested next steps
+
+- `peaceSignProgress >= 1` triggers the countdown instantly. A 200 ms "flash" animation on the progress arc at completion (e.g., brief white fill before the arc hides) would give clearer feedback that the hold succeeded.
+- The tutorial `COUNTDOWN_CANCEL_DELAY_MS` grace window is 1500 ms. If testers report the cancel gesture feels sluggish, try 800–1000 ms.
+- `CameraGateScreen` starts a new MediaPipe instance on mount. Pre-initializing the landmarker during the tutorial (background load while user reads steps) would eliminate the brief loading overlay on the gate screen.
+- Zoom range is `BASE_SCALE = 1.15` to `ZOOM_MAX_SCALE = 1.60`. If the zoom feels too sensitive or not sensitive enough, tune `HAND_SPAN_MIN`/`HAND_SPAN_MAX` in `useGestureDetection.ts` without touching any other files.
+- No SMS backend is wired. The phone number is stored in `App` state as `_phoneNumber`; a Twilio/AWS SNS integration would read from there after the capture flow.
+
+---
+
 ## Changelog
+
+### 2026-05-26 (Session 5)
+
+- **On-screen phone keypad** — `PhoneScreen` now shows an iOS-style 12-key numeric grid (0–9, delete, continue) instead of relying on the device keyboard. Touch-friendly for iPad; existing format/validate logic preserved.
+- **Gesture-driven tutorial** — all 6 tutorial steps require a real detected gesture to advance; manual Next button removed. 500 ms hold → success indicator → 800 ms → auto-advance. Camera viewport enlarged to `min(60vh, 88vw)` square. Text sizes and spacing improved for readability at distance. Skip Tutorial moved to bottom-right.
+- **New tutorial steps** — "During Countdown" (thumbs up), "Confirm & Save" (thumbs up), and "Retake" (thumbs down) steps added to teach post-capture gestures before the camera.
+- **Thumbs up / down detection** — `detectThumbsUp` and `detectThumbsDown` classifiers added to `useGestureDetection`; `DetectedGesture` type extended; `ThumbsDownIcon` added to `GestureIcons`.
+- **Post-capture gesture flow** — `CaptureScreen` detects thumbs up (save) and thumbs down (retake) via hidden camera stream; 500 ms confirm + 800 ms display timing; manual buttons kept as fallback.
+- **Visible CameraGateScreen** — gate screen now shows a visible camera feed in the same square viewport, with SVG arc overlay and thumbs-up icon badge.
+- **Gesture-controlled zoom** — hand proximity (MediaPipe bounding-box diagonal, 5-frame smoothed) drives zoom from 1.15× to 1.60× in `CameraScreen`. Zoom suspended during countdown to preserve timer stability.
 
 ### 2026-05-25 (Session 4)
 

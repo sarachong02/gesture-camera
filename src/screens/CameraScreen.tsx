@@ -9,6 +9,7 @@ import HandOverlay from "../components/HandOverlay";
 import { FILTER_OVERLAYS, compositeWithOverlay } from "../filterOverlays";
 
 const BASE_SCALE  = 1.15;
+const ZOOM_MAX_SCALE = 1.6;
 const PAN_SCALE   = 180;
 const TILT_SCALE  = 120;
 
@@ -30,8 +31,10 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
 
   // Gesture detection is always enabled when camera is ready.
   // The hook itself restricts to open-palm-only during countdown state.
-  const { gesture, palmPosition, landmarksRef, isLoading, error: gestureError, peaceSignProgress } =
+  const { gesture, palmPosition, landmarksRef, isLoading, error: gestureError, peaceSignProgress, handSize } =
     useGestureDetection({ videoRef, enabled: isReady, gestureState });
+
+  const zoomScale = BASE_SCALE + handSize * (ZOOM_MAX_SCALE - BASE_SCALE);
 
   // ── Gesture state machine ─────────────────────────────────────────────────
   useEffect(() => {
@@ -101,8 +104,8 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
       <div
         className="absolute inset-0"
         style={{
-          transform: `translate(${panX}px, ${panY}px) scale(${BASE_SCALE})`,
-          transition: "transform 0.12s ease-out",
+          transform: `translate(${panX}px, ${panY}px) scale(${zoomScale})`,
+          transition: "transform 0.15s ease-out",
         }}
       >
         <video

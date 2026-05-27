@@ -92,6 +92,31 @@ const PEACE_SIGN_LM: LandmarkPoint[] = [
   [70, 109], // 20 PINKY_TIP
 ];
 
+// Thumb extended downward (thumbs-up flipped 180°), all four fingers curled
+const THUMBS_DOWN_LM: LandmarkPoint[] = [
+  [45,  7],  // 0 WRIST
+  [57, 19],  // 1 THUMB_CMC
+  [67, 32],  // 2 THUMB_MCP
+  [75, 48],  // 3 THUMB_IP
+  [80, 65],  // 4 THUMB_TIP (pointing down)
+  [46, 37],  // 5 INDEX_MCP
+  [43, 30],  // 6 INDEX_PIP
+  [45, 20],  // 7 INDEX_DIP
+  [48, 14],  // 8 INDEX_TIP
+  [37, 39],  // 9 MIDDLE_MCP
+  [34, 31],  // 10 MIDDLE_PIP
+  [36, 21],  // 11 MIDDLE_DIP
+  [39, 16],  // 12 MIDDLE_TIP
+  [28, 36],  // 13 RING_MCP
+  [26, 28],  // 14 RING_PIP
+  [28, 19],  // 15 RING_DIP
+  [31, 13],  // 16 RING_TIP
+  [21, 29],  // 17 PINKY_MCP
+  [18, 21],  // 18 PINKY_PIP
+  [20, 13],  // 19 PINKY_DIP
+  [23,  9],  // 20 PINKY_TIP
+];
+
 // Thumb extended upward, all four fingers curled into fist
 const THUMBS_UP_LM: LandmarkPoint[] = [
   [55, 113], // 0 WRIST
@@ -127,4 +152,8 @@ export function PeaceSignIcon({ className }: { className?: string }) {
 
 export function ThumbsUpIcon({ className }: { className?: string }) {
   return <HandSkeleton lm={THUMBS_UP_LM} className={className} />;
+}
+
+export function ThumbsDownIcon({ className }: { className?: string }) {
+  return <HandSkeleton lm={THUMBS_DOWN_LM} className={className} />;
 }

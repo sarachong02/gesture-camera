@@ -21,7 +21,7 @@ export type GestureState =
   | "countdown"    // peace sign held 3s triggered countdown
   | "captured";    // photo taken
 
-export type DetectedGesture = "none" | "open_palm" | "peace_sign";
+export type DetectedGesture = "none" | "open_palm" | "peace_sign" | "thumbs_up" | "thumbs_down";
 
 export interface PalmPosition {
   x: number; // 0–1 normalized
