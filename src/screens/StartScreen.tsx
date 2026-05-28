@@ -7,15 +7,16 @@ interface Props {
 export default function StartScreen({ onStart }: Props) {
   return (
     <div className="w-full h-full relative overflow-hidden animate-fade-in" style={{ backgroundColor: "#0d1b22" }}>
-      {/* Single background — no overlay */}
+      {/* Single background — explicit z-index 0 so content layer is always on top */}
       <img
         src={startBg}
         alt=""
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        style={{ zIndex: 0 }}
       />
 
-      {/* Content — upper portion, mirrors Figma proportions */}
-      <div className="absolute inset-0 flex flex-col items-center" style={{ paddingTop: "10%" }}>
+      {/* Content — z-index 1 ensures it renders above the background image on iOS Safari */}
+      <div className="absolute inset-0 flex flex-col items-center" style={{ paddingTop: "10%", zIndex: 1 }}>
         <h1
           className="text-white text-center animate-slide-up"
           style={{ fontFamily: "'Gilda Display', Georgia, serif", fontSize: "clamp(56px, 8vw, 100px)", fontWeight: 400, lineHeight: 1.05 }}

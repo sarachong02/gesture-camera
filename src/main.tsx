@@ -58,12 +58,20 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   }
 }
 
-// ── TEMP: iOS/iPadOS detection — stamp class before React mounts ───────────
-// maxTouchPoints > 1 is more reliable than CSS.supports('-webkit-touch-callout')
-// on newer iPadOS. The 'ios' class drives both CSS animation fixes and routing.
+// ── TEMP: iOS/iPadOS detection — inject style before React mounts ──────────
+// Injecting a <style> element here (before createRoot) gives it higher
+// source-order than the linked CSS bundle, so it wins regardless of cascade.
+// CSS class approach (.ios .animate-X) was losing to the animation engine;
+// a dynamically-appended <style> with !important cannot be overridden.
 const _isIOS = navigator.maxTouchPoints > 1 || CSS.supports('-webkit-touch-callout', 'none');
 if (_isIOS) {
   document.documentElement.classList.add('ios');
+  const _s = document.createElement('style');
+  _s.id = 'ios-anim-fix';
+  _s.textContent =
+    '.animate-fade-in{animation:none!important;opacity:1!important}' +
+    '.animate-slide-up{animation:none!important;opacity:1!important;transform:translateY(0)!important}';
+  document.head.appendChild(_s);
   console.log('[iOS fallback] iOS/iPadOS detected — maxTouchPoints:', navigator.maxTouchPoints);
 }
 
