@@ -123,6 +123,25 @@
   }
 }
 
+/* ── iOS Safari animation fix (unlayered — overrides @layer utilities) ──────
+ * iOS Safari can freeze CSS animations at their initial keyframe, leaving
+ * every element with animate-fade-in / animate-slide-up stuck at opacity:0.
+ * These rules are outside @layer so they take precedence over Tailwind's
+ * @layer utilities definitions, ensuring content is always visible on iOS.
+ * The fade/slide visual effects are intentionally skipped on iOS in exchange
+ * for reliable visibility. */
+@supports (-webkit-touch-callout: none) {
+  .animate-fade-in {
+    animation: none;
+    opacity: 1;
+  }
+  .animate-slide-up {
+    animation: none;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ── Glass surface utilities ─────────────────────────────────────────────── */
 @layer utilities {
   /* Minimum 16px text size */

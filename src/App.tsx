@@ -44,65 +44,71 @@ export default function App() {
     // The <img> replaces CSS background-image: iOS Safari has a known WebKit bug
     // where background-size:cover inside overflow:hidden doesn't render reliably.
     <div className="w-full h-full relative overflow-hidden" style={{ backgroundColor: "#0d1b22" }}>
+      {/* Background image — z-index 0, explicitly behind screen content */}
       <img
         src={appBg}
         alt=""
         aria-hidden
         className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+        style={{ zIndex: 0 }}
       />
-      {screen === "start" && (
-        <StartScreen onStart={() => setScreen("phone")} />
-      )}
-      {screen === "phone" && (
-        <PhoneScreen onSubmit={handlePhoneSubmit} />
-      )}
-      {screen === "filter" && (
-        <FilterScreen
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-          onConfirm={handleFilterConfirm}
-        />
-      )}
-      {screen === "tutorial" && (
-        <TutorialScreen
-          onComplete={() => setScreen("camera_gate")}
-          onSkip={() => setScreen("camera")}
-        />
-      )}
-      {screen === "camera_gate" && (
-        <CameraGateScreen onEnter={() => setScreen("camera")} />
-      )}
-      {screen === "camera" && (
-        <CameraScreen
-          activeFilter={activeFilter}
-          onCapture={handleCapture}
-        />
-      )}
-      {screen === "capture" && capturedImage && (
-        <CaptureScreen
-          imageUrl={capturedImage}
-          activeFilter={activeFilter}
-          onRetake={handleRetake}
-          onSave={() => setScreen("consent")}
-        />
-      )}
-      {screen === "consent" && (
-        <ConsentScreen
-          onConsent={(agreed) => {
-            setConsentGiven(agreed);
-            setScreen("thankyou");
-          }}
-        />
-      )}
-      {screen === "thankyou" && (
-        <ThankYouScreen onRestart={() => {
-          setPhoneNumber("");
-          setActiveFilter("no_filter");
-          setCapturedImage(null);
-          setConsentGiven(null);
-          setScreen("start");
-        }} />
-      )}
+      {/* Screen layer — z-index 1, always above background img.
+          absolute inset-0 matches App dimensions; children use w-full h-full. */}
+      <div className="absolute inset-0" style={{ zIndex: 1 }}>
+        {screen === "start" && (
+          <StartScreen onStart={() => setScreen("phone")} />
+        )}
+        {screen === "phone" && (
+          <PhoneScreen onSubmit={handlePhoneSubmit} />
+        )}
+        {screen === "filter" && (
+          <FilterScreen
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            onConfirm={handleFilterConfirm}
+          />
+        )}
+        {screen === "tutorial" && (
+          <TutorialScreen
+            onComplete={() => setScreen("camera_gate")}
+            onSkip={() => setScreen("camera")}
+          />
+        )}
+        {screen === "camera_gate" && (
+          <CameraGateScreen onEnter={() => setScreen("camera")} />
+        )}
+        {screen === "camera" && (
+          <CameraScreen
+            activeFilter={activeFilter}
+            onCapture={handleCapture}
+          />
+        )}
+        {screen === "capture" && capturedImage && (
+          <CaptureScreen
+            imageUrl={capturedImage}
+            activeFilter={activeFilter}
+            onRetake={handleRetake}
+            onSave={() => setScreen("consent")}
+          />
+        )}
+        {screen === "consent" && (
+          <ConsentScreen
+            onConsent={(agreed) => {
+              setConsentGiven(agreed);
+              setScreen("thankyou");
+            }}
+          />
+        )}
+        {screen === "thankyou" && (
+          <ThankYouScreen onRestart={() => {
+            setPhoneNumber("");
+            setActiveFilter("no_filter");
+            setCapturedImage(null);
+            setConsentGiven(null);
+            setScreen("start");
+          }} />
+        )}
+      </div>
     </div>
   );
 }
