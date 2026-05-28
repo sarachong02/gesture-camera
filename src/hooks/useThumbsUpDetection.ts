@@ -46,6 +46,7 @@ export function useThumbsUpDetection({ videoRef, onDetected }: Options): Result 
   useEffect(() => {
     let cancelled = false;
     async function init() {
+      console.log("[GestureCamera] Loading thumbs-up model...");
       try {
         const { FilesetResolver, HandLandmarker } = await import("@mediapipe/tasks-vision");
         const vision = await FilesetResolver.forVisionTasks(
@@ -67,17 +68,21 @@ export function useThumbsUpDetection({ videoRef, onDetected }: Options): Result 
             baseOptions: { modelAssetPath: MODEL_PATH, delegate: "GPU" },
             ...COMMON_OPTIONS,
           });
-        } catch {
+          console.log("[GestureCamera] Thumbs-up model loaded (GPU).");
+        } catch (gpuErr) {
+          console.warn("[GestureCamera] GPU delegate failed (thumbs-up), retrying with CPU:", gpuErr);
           landmarker = await HandLandmarker.createFromOptions(vision, {
             baseOptions: { modelAssetPath: MODEL_PATH, delegate: "CPU" },
             ...COMMON_OPTIONS,
           });
+          console.log("[GestureCamera] Thumbs-up model loaded (CPU fallback).");
         }
         if (!cancelled) {
           landmarkerRef.current = landmarker;
           setIsLoading(false);
         }
       } catch (err) {
+        console.error("[GestureCamera] Failed to load thumbs-up model:", err);
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Failed to load gesture model");
           setIsLoading(false);

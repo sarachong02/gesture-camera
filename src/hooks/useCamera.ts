@@ -17,6 +17,11 @@ export function useCamera(): UseCameraReturn {
     let mounted = true;
 
     async function startCamera() {
+      // Guard: camera API requires HTTPS and a supporting browser.
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
+        if (mounted) setError("Camera not available. Please use a supported browser over HTTPS.");
+        return;
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
@@ -29,7 +34,11 @@ export function useCamera(): UseCameraReturn {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play();
+            // play() returns a Promise on modern browsers; suppress iOS rejection
+            // warnings for muted/playsInline video (should never actually reject).
+            videoRef.current?.play().catch((err: unknown) => {
+              console.warn("[GestureCamera] video.play() rejected:", err);
+            });
             if (mounted) setIsReady(true);
           };
         }
@@ -40,6 +49,7 @@ export function useCamera(): UseCameraReturn {
         } else if (err instanceof DOMException && err.name === "NotFoundError") {
           setError("No camera found on this device.");
         } else {
+          console.error("[GestureCamera] getUserMedia error:", err);
           setError("Could not access camera.");
         }
       }

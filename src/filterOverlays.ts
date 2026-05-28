@@ -28,7 +28,9 @@ export async function compositeWithOverlay(
   const canvas = document.createElement("canvas");
   canvas.width = base.naturalWidth;
   canvas.height = base.naturalHeight;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d");
+  // iOS limits concurrent canvas contexts; fall back to unfiltered image if unavailable.
+  if (!ctx) return baseDataUrl;
   ctx.drawImage(base, 0, 0);
   ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
 

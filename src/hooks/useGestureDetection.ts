@@ -195,6 +195,7 @@ export function useGestureDetection({
     let cancelled = false;
 
     async function initMediaPipe() {
+      console.log("[GestureCamera] Loading gesture model...");
       try {
         const { FilesetResolver, HandLandmarker } = await import("@mediapipe/tasks-vision");
         const vision = await FilesetResolver.forVisionTasks(
@@ -217,17 +218,21 @@ export function useGestureDetection({
             baseOptions: { modelAssetPath: MODEL_PATH, delegate: "GPU" },
             ...COMMON_OPTIONS,
           });
-        } catch {
+          console.log("[GestureCamera] Gesture model loaded (GPU).");
+        } catch (gpuErr) {
+          console.warn("[GestureCamera] GPU delegate failed, retrying with CPU:", gpuErr);
           landmarker = await HandLandmarker.createFromOptions(vision, {
             baseOptions: { modelAssetPath: MODEL_PATH, delegate: "CPU" },
             ...COMMON_OPTIONS,
           });
+          console.log("[GestureCamera] Gesture model loaded (CPU fallback).");
         }
         if (!cancelled) {
           landmarkerRef.current = landmarker;
           setIsLoading(false);
         }
       } catch (err) {
+        console.error("[GestureCamera] Failed to load gesture model:", err);
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Failed to load gesture model");
           setIsLoading(false);
