@@ -59,9 +59,16 @@ if (typeof window === 'undefined') {
       // Give up — app will run without crossOriginIsolated (GPU delegate
       // doesn't need SharedArrayBuffer, so MediaPipe still works).
       console.warn('coi-serviceworker: could not achieve cross-origin isolation after', reloadCount, 'reloads; proceeding without.');
+    } else if (!('serviceWorker' in navigator)) {
+      // Private browsing mode on iOS or unsupported browser — skip registration.
+      console.warn('coi-serviceworker: service workers not supported, proceeding without cross-origin isolation.');
+    } else if (!document.currentScript || !document.currentScript.src) {
+      // Happens in certain inline/dynamic script contexts — cannot self-register.
+      console.warn('coi-serviceworker: document.currentScript unavailable, skipping registration.');
     } else {
+      var swSrc = document.currentScript.src;
       navigator.serviceWorker
-        .register(document.currentScript.src)
+        .register(swSrc)
         .then(function (reg) {
           function onStateChange() {
             if (this.state === 'installed' || this.state === 'activated') {
