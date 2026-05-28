@@ -22,6 +22,9 @@ const PEACE_HOLD_MS = 3000;
 // Below MIN → handSize = 0 (far away). Above MAX → handSize = 1 (very close).
 const HAND_SPAN_MIN = 0.20;
 const HAND_SPAN_MAX = 0.65;
+// Consecutive frames with a hand present before handSize is emitted.
+// Discards the first several noisy frames after hand entry.
+const HAND_STABLE_MIN_FRAMES = 6;
 
 // How long after countdown starts before an open palm can cancel it.
 // This prevents the peace-sign pose from briefly triggering detectOpenPalm
@@ -147,7 +150,8 @@ export function useGestureDetection({
   const lastVideoTimeRef  = useRef<number>(-1);
   const positionBufferRef = useRef<PalmPosition[]>([]);
   const peaceSignStartRef  = useRef<number | null>(null);
-  const handSpanBufferRef  = useRef<number[]>([]);
+  const handSpanBufferRef      = useRef<number[]>([]);
+  const handStableFramesRef    = useRef<number>(0);
 
   // Proximity-based hand lock: position of the last-selected hand.
   // When multiple hands are in frame, we always pick the one closest to this.
@@ -303,10 +307,13 @@ export function useGestureDetection({
           // Smooth hand proximity for zoom control (skipped during countdown
           // for the same reason palmPosition is skipped — avoids re-renders
           // that would destabilise handleCountdownComplete).
+          handStableFramesRef.current += 1;
           handSpanBufferRef.current.push(getHandSpan(lm));
-          if (handSpanBufferRef.current.length > 5) handSpanBufferRef.current.shift();
-          const avgSpan = handSpanBufferRef.current.reduce((a, b) => a + b, 0) / handSpanBufferRef.current.length;
-          setHandSize(Math.max(0, Math.min(1, (avgSpan - HAND_SPAN_MIN) / (HAND_SPAN_MAX - HAND_SPAN_MIN))));
+          if (handSpanBufferRef.current.length > 8) handSpanBufferRef.current.shift();
+          if (handStableFramesRef.current >= HAND_STABLE_MIN_FRAMES) {
+            const avgSpan = handSpanBufferRef.current.reduce((a, b) => a + b, 0) / handSpanBufferRef.current.length;
+            setHandSize(Math.max(0, Math.min(1, (avgSpan - HAND_SPAN_MIN) / (HAND_SPAN_MAX - HAND_SPAN_MIN))));
+          }
 
           if (detectPeaceSign(lm)) {
             if (peaceSignStartRef.current === null) {
@@ -340,6 +347,7 @@ export function useGestureDetection({
         landmarksRef.current = null;
         positionBufferRef.current = [];
         handSpanBufferRef.current = [];
+        handStableFramesRef.current = 0;
         peaceSignStartRef.current = null;
         setPalmPosition(null);
         setPeaceSignProgress(0);

@@ -409,7 +409,7 @@ Hand proximity (bounding-box diagonal of all 21 landmarks) drives camera zoom in
 
 ---
 
-### State of the codebase (as of 2026-05-26)
+### State of the codebase (as of 2026-05-27)
 
 **Full start flow:**
 ```
@@ -439,7 +439,96 @@ Start → Phone number → Filter selection → Tutorial (6 gesture steps) → C
 
 ---
 
+## Handoff — 2026-05-27 (Session 6)
+
+### What was worked on
+
+Two features: a QR-gated custom filter on the filter selection screen, and a set of zoom stabilization fixes in the gesture detection pipeline.
+
+---
+
+#### Change 1 — "Custom" filter unlocked via QR scan
+
+A new **Custom** button was added to the filter selection bar, positioned immediately to the right of the "No Filter" card.
+
+**First-time flow (QR not yet scanned):**
+- Tapping **Custom** opens a full-screen QR scan modal layered over the existing filter-preview camera feed.
+- The modal shows the live camera stream inside a square viewfinder (clipped, rounded corners) with animated corner-bracket guides and a horizontal sweep line that travels top-to-bottom on a 2-second loop.
+- After 2 seconds of "scanning," the phase transitions to **detected**: the viewfinder border turns green with a glow (`ring-2 ring-green-400`), a green checkmark overlay appears, and the status text turns green — "QR Code Detected."
+- 1.2 seconds later the modal closes automatically and the jellyfish background is applied as the active filter.
+- The unlock is **session-only** (React state, no `localStorage`/`sessionStorage`). Reloading the page or starting a new user session requires scanning again.
+
+**After unlock:**
+- The Custom card thumbnail switches from the QR icon to the jellyfish overlay image.
+- Tapping the card directly applies the jellyfish filter — no modal.
+- The card follows the same active/inactive styling as all other filter cards.
+- Users can freely switch between Custom and any other filter.
+
+**Camera feed reuse:** The QR modal clones the `MediaStream` already attached to the filter-screen's preview video (`videoRef.current.srcObject`) onto a second `<video>` element inside the modal. No second `getUserMedia` call is made.
+
+**Key files changed:**
+- `src/types.ts` — `"jellyfish"` added to `FilterId`
+- `src/filterOverlays.ts` — `jellyfish_background.PNG` imported; `jellyfish` key added to `FILTER_OVERLAYS`
+- `src/vite-env.d.ts` — `declare module "*.PNG"` added to resolve the uppercase extension
+- `src/screens/FilterScreen.tsx` — `jellyfishUnlocked` state; `qrVideoRef`; stream-clone effect; QR timing effect; modal JSX; Custom button injected after No Filter via `FILTERS.flatMap`
+
+---
+
+#### Change 2 — Zoom stabilization
+
+Three layers of fixes to prevent jitter and premature zoom changes.
+
+**Gate on calibration state (`CameraScreen.tsx`):**
+`zoomScale` is clamped to `BASE_SCALE` (1.15×) while `gestureState === "waiting"`. Zoom cannot change at all until the user has completed their first open-palm calibration. This eliminates the entire class of "zoom jumps on app load" issues.
+
+**Stable-frames warmup (`useGestureDetection.ts`):**
+A new `handStableFramesRef` counter increments each frame a hand is present. `setHandSize` is not called until the counter reaches `HAND_STABLE_MIN_FRAMES = 6`, discarding the first ~6 noisy frames every time a hand enters frame. The counter resets to 0 whenever the hand leaves frame, so re-entry also gets the warmup treatment.
+
+**Larger rolling average buffer (`useGestureDetection.ts`):**
+`handSpanBufferRef` now keeps the last 8 frames (up from 5). Combined with the warmup gate, this produces a smoother, less jittery zoom value.
+
+**Key files changed:**
+- `src/screens/CameraScreen.tsx` — `zoomScale` gated on `gestureState !== "waiting"`
+- `src/hooks/useGestureDetection.ts` — `HAND_STABLE_MIN_FRAMES` constant; `handStableFramesRef`; buffer size 5 → 8; warmup gate around `setHandSize`; `handStableFramesRef` reset in no-hand branch
+
+---
+
+#### Change 3 — Tutorial step removed
+
+The "During Countdown" tutorial step (step 3 of 6, thumbs-up gesture) was removed. The tutorial now has **5 steps**: Calibrate → Start Countdown → Cancel Countdown → Confirm & Save → Retake.
+
+**Key files changed:**
+- `src/screens/TutorialScreen.tsx` — "During Countdown" entry removed from `STEPS` array
+
+---
+
+### Updated start flow
+
+```
+Start → Phone number → Filter selection → Tutorial (5 gesture steps) → Camera gate (thumbs up) → Camera → Capture (thumbs up/down) → Thank you
+                                                                       ↑ Skip Tutorial bypasses gate ────────────────────────────────┘
+```
+
+---
+
+### Suggested next steps
+
+- The QR scan is fully mocked. A real implementation could use a library like `jsQR` on the same `qrVideoRef` video element — each frame, draw to an offscreen canvas and call `jsQR(imageData)`. The existing timing/feedback scaffolding would need minimal changes.
+- `HAND_STABLE_MIN_FRAMES = 6` targets ~100 ms at 60 fps. If zoom still feels laggy on first hand entry, try lowering to 4. If jitter persists in low-light (slower detection), raise to 8.
+- The jellyfish unlock resets every session by design. If the booth runs continuously and re-scanning feels disruptive, a URL parameter (e.g. `?unlocked=1`) could pre-set `jellyfishUnlocked` without adding any persistence layer.
+
+---
+
 ## Changelog
+
+### 2026-05-27 (Session 6)
+
+- **Custom filter via QR scan** — new "Custom" button added to the filter bar (next to "No Filter"). Tapping opens a live-camera QR scan modal with corner-bracket guides, an animated sweep line, and a green glow/checkmark on detection. Unlock is session-only (React state); reloading resets it. After unlock, the button directly selects the jellyfish background like any other filter. Camera stream is reused from the existing filter-screen preview — no second `getUserMedia` call.
+- **Jellyfish background** — `jellyfish_background.PNG` added to `FILTER_OVERLAYS`; composited onto captures and shown as a live overlay in `CameraScreen` identical to Orca/Harbor Seal.
+- **Zoom gated on calibration** — `zoomScale` now stays at `BASE_SCALE` (1.15×) until `gestureState` leaves `"waiting"`. No zoom change is possible before the first open-palm calibration.
+- **Zoom warmup frames** — first 6 consecutive frames after a hand enters frame are buffered but do not emit `handSize`. Eliminates the initial detection-noise spike. Counter resets on hand exit so re-entry also gets the warmup.
+- **Larger zoom buffer** — `handSpanBufferRef` window increased from 5 to 8 frames for a smoother rolling average.
+- **Tutorial trimmed** — "During Countdown" step removed; tutorial is now 5 gesture steps.
 
 ### 2026-05-26 (Session 5)
 

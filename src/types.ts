@@ -1,6 +1,6 @@
 export type AppScreen = "start" | "phone" | "filter" | "tutorial" | "camera_gate" | "camera" | "capture" | "thankyou";
 
-export type FilterId = "no_filter" | "orca" | "harbor_seal" | "geoduck_clam" | "giant_pacific_octopus";
+export type FilterId = "no_filter" | "jellyfish" | "orca" | "harbor_seal" | "geoduck_clam" | "giant_pacific_octopus";
 
 export interface FilterOption {
   id: FilterId;

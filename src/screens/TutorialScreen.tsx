@@ -37,13 +37,6 @@ const STEPS: TutorialStep[] = [
     requiredGesture: "peace_sign",
   },
   {
-    title: "During Countdown",
-    description:
-      "Keep posing naturally while the countdown runs. Only an open palm will cancel it.",
-    illustration: <ThumbsUpIcon className="w-9 h-11" />,
-    requiredGesture: "thumbs_up",
-  },
-  {
     title: "Cancel Countdown",
     description:
       "Show an open palm at any point during the countdown to cancel.",

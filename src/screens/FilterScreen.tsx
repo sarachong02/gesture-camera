@@ -1,4 +1,5 @@
 import type React from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCamera } from "../hooks/useCamera";
 import type { FilterId } from "../types";
 import { FILTERS } from "../types";
@@ -12,6 +13,7 @@ interface Props {
 
 const FILTER_EMOJI: Record<FilterId, string> = {
   no_filter: "—",
+  jellyfish: "🪼",
   orca: "🐋",
   harbor_seal: "🦭",
   geoduck_clam: "🐚",
@@ -21,6 +23,33 @@ const FILTER_EMOJI: Record<FilterId, string> = {
 export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }: Props) {
   const { videoRef, isReady } = useCamera();
   const overlayUrl = FILTER_OVERLAYS[activeFilter];
+
+  const [jellyfishUnlocked, setJellyfishUnlocked] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [qrPhase, setQrPhase] = useState<"scanning" | "detected">("scanning");
+  const qrVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Clone the existing camera stream into the QR viewfinder when the modal opens
+  useEffect(() => {
+    if (!qrModalOpen || !qrVideoRef.current || !videoRef.current) return;
+    const stream = videoRef.current.srcObject as MediaStream | null;
+    if (stream) {
+      qrVideoRef.current.srcObject = stream;
+      qrVideoRef.current.play().catch(() => {});
+    }
+  }, [qrModalOpen, videoRef]);
+
+  useEffect(() => {
+    if (!qrModalOpen) return;
+    setQrPhase("scanning");
+    const t1 = setTimeout(() => setQrPhase("detected"), 2000);
+    const t2 = setTimeout(() => {
+      setJellyfishUnlocked(true);
+      setQrModalOpen(false);
+      onFilterChange("jellyfish");
+    }, 3200);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [qrModalOpen, onFilterChange]);
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-black">
@@ -55,20 +84,86 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
         <p className="text-white/60 text-xs tracking-[0.25em] uppercase">Choose your border</p>
       </div>
 
+      {/* QR scan modal */}
+      {qrModalOpen && (
+        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50">
+          <style>{`@keyframes qr-scan{0%,100%{transform:translateY(0)}50%{transform:translateY(200px)}}`}</style>
+
+          <p className="text-white/50 text-xs tracking-[0.2em] uppercase mb-5">
+            Hold a QR code up to the camera
+          </p>
+
+          {/* Viewfinder: live camera + overlays */}
+          <div className={`relative w-56 h-56 overflow-hidden rounded-lg mb-6 transition-all duration-300 ${
+            qrPhase === "detected"
+              ? "ring-2 ring-green-400 shadow-[0_0_24px_rgba(74,222,128,0.55)]"
+              : "ring-1 ring-white/20"
+          }`}>
+            <video
+              ref={qrVideoRef}
+              className="w-full h-full object-cover"
+              style={{ transform: "scaleX(-1)" }}
+              playsInline
+              muted
+            />
+
+            {/* Sweep line while scanning */}
+            {qrPhase === "scanning" && (
+              <div
+                className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent pointer-events-none"
+                style={{ animation: "qr-scan 2s ease-in-out infinite" }}
+              />
+            )}
+
+            {/* Corner brackets */}
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white/80 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white/80 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white/80 pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white/80 pointer-events-none" />
+
+            {/* Success overlay */}
+            {qrPhase === "detected" && (
+              <div className="absolute inset-0 bg-green-400/20 flex items-center justify-center pointer-events-none">
+                <div className="w-14 h-14 rounded-full bg-green-400/40 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-9 h-9 text-green-200" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <p className={`text-sm tracking-[0.2em] uppercase transition-colors duration-300 ${
+            qrPhase === "detected" ? "text-green-400" : "text-white"
+          }`}>
+            {qrPhase === "scanning" ? "Scanning QR Code…" : "QR Code Detected"}
+          </p>
+
+          {qrPhase === "scanning" && (
+            <button
+              onClick={() => setQrModalOpen(false)}
+              className="mt-10 text-white/35 text-xs tracking-widest uppercase"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Bottom filter bar */}
       <div className="absolute bottom-0 left-0 right-0 px-6 pt-8 pb-8 bg-gradient-to-t from-black/85 via-black/50 to-transparent">
         <div className="flex items-end justify-between gap-4">
 
           {/* Filter option cards */}
           <div className="flex gap-3">
-            {FILTERS.map((filter) => {
+            {FILTERS.flatMap((filter, idx) => {
               const filterOverlay = FILTER_OVERLAYS[filter.id];
               const hasOverlay    = !!filterOverlay;
               const isNoFilter    = filter.id === "no_filter";
               const isEnabled     = hasOverlay || isNoFilter;
               const isActive      = activeFilter === filter.id;
 
-              return (
+              const card = (
                 <button
                   key={filter.id}
                   onClick={() => { if (isEnabled) onFilterChange(filter.id); }}
@@ -111,6 +206,57 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
                   )}
                 </button>
               );
+
+              if (idx !== 0) return [card];
+
+              // Insert QR/Custom button right after "No Filter"
+              const jellyfishOverlay = FILTER_OVERLAYS["jellyfish"];
+              const isJellyfishActive = activeFilter === "jellyfish";
+              const qrBtn = (
+                <button
+                  key="qr_scan"
+                  onClick={() => {
+                    if (jellyfishUnlocked) {
+                      onFilterChange("jellyfish");
+                    } else {
+                      setQrModalOpen(true);
+                    }
+                  }}
+                  className={`relative flex flex-col items-center gap-2 px-3 pt-2.5 pb-3 rounded-2xl min-w-[80px] transition-all duration-200 select-none
+                    ${isJellyfishActive
+                      ? "bg-white/20 border border-white/60 text-white"
+                      : "bg-black/50 border border-white/15 text-white/55 active:bg-white/10"
+                    }
+                  `}
+                >
+                  <div className="w-14 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-black/30">
+                    {jellyfishUnlocked && jellyfishOverlay ? (
+                      <img src={jellyfishOverlay} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <svg viewBox="0 0 40 40" className="w-9 h-9 opacity-60" fill="white">
+                        <rect x="3" y="3" width="13" height="13" rx="1.5" fill="none" stroke="white" strokeWidth="2"/>
+                        <rect x="7" y="7" width="5" height="5" fill="white"/>
+                        <rect x="24" y="3" width="13" height="13" rx="1.5" fill="none" stroke="white" strokeWidth="2"/>
+                        <rect x="28" y="7" width="5" height="5" fill="white"/>
+                        <rect x="3" y="24" width="13" height="13" rx="1.5" fill="none" stroke="white" strokeWidth="2"/>
+                        <rect x="7" y="28" width="5" height="5" fill="white"/>
+                        <rect x="24" y="24" width="5" height="5" fill="white"/>
+                        <rect x="31" y="24" width="5" height="5" fill="white"/>
+                        <rect x="24" y="31" width="5" height="5" fill="white"/>
+                        <rect x="31" y="31" width="5" height="5" fill="white"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-xs tracking-wide text-center leading-tight px-1">
+                    Custom
+                  </span>
+                  {isJellyfishActive && (
+                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-white/80" />
+                  )}
+                </button>
+              );
+
+              return [card, qrBtn];
             })}
           </div>
 

@@ -34,7 +34,9 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
   const { gesture, palmPosition, landmarksRef, isLoading, error: gestureError, peaceSignProgress, handSize } =
     useGestureDetection({ videoRef, enabled: isReady, gestureState });
 
-  const zoomScale = BASE_SCALE + handSize * (ZOOM_MAX_SCALE - BASE_SCALE);
+  const zoomScale = gestureState === "waiting"
+    ? BASE_SCALE
+    : BASE_SCALE + handSize * (ZOOM_MAX_SCALE - BASE_SCALE);
 
   // ── Gesture state machine ─────────────────────────────────────────────────
   useEffect(() => {
