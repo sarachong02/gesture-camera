@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
 // ── Audio ──────────────────────────────────────────────────────────────────
-// Module-level singleton so sounds keep playing even after the component unmounts
-// (which happens the instant onComplete transitions to the capture screen).
 let audioCtx: AudioContext | null = null;
 
 function getAudioCtx(): AudioContext {
@@ -14,7 +12,6 @@ function getAudioCtx(): AudioContext {
 
 function playTone(frequency: number, durationSec: number, volume = 0.22) {
   const ctx = getAudioCtx();
-  // Resume handles browsers that suspend AudioContext until user interaction
   void ctx.resume().then(() => {
     const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -24,7 +21,6 @@ function playTone(frequency: number, durationSec: number, volume = 0.22) {
     osc.type = "sine";
     osc.frequency.setValueAtTime(frequency, ctx.currentTime);
 
-    // Quick attack, exponential decay to silence
     gain.gain.setValueAtTime(volume, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + durationSec);
 
@@ -37,7 +33,6 @@ function playTick() {
   playTone(440, 1.0);
 }
 
-// Shutter sound — brief ascending chirp to mimic a camera click
 function playShutter() {
   const ctx = getAudioCtx();
   void ctx.resume().then(() => {
@@ -67,10 +62,7 @@ interface Props {
 export default function CountdownOverlay({ onComplete }: Props) {
   const [count, setCount] = useState(5);
 
-  // Keep onComplete in a ref so the timer effect never has it as a dep.
-  // If it were a dep, any parent re-render that produces a new onComplete
-  // reference would cancel + restart the 1-second rAF tick, pausing the
-  // countdown while a hand is visible in frame.
+  // onComplete kept in a ref so the timer effect never has it as a dep
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
@@ -83,7 +75,6 @@ export default function CountdownOverlay({ onComplete }: Props) {
 
     playTick();
 
-    // Advance count by 1 after exactly 1 000 ms using rAF timestamps
     let start: number | null = null;
     let raf: number;
 
@@ -99,11 +90,11 @@ export default function CountdownOverlay({ onComplete }: Props) {
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [count]); // onComplete intentionally omitted — read via ref above
+  }, [count]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <div className="absolute inset-0 bg-black/30" />
+      <div className="absolute inset-0 bg-[rgba(19,78,94,0.28)]" />
 
       <div className="relative z-10 flex flex-col items-center gap-4">
         <span
@@ -113,7 +104,7 @@ export default function CountdownOverlay({ onComplete }: Props) {
           {count}
         </span>
 
-        <p className="text-white/50 text-xs tracking-widest uppercase">
+        <p className="text-white/55 text-xs tracking-widest uppercase">
           Hold still
         </p>
       </div>

@@ -13,7 +13,6 @@ interface Props {
 export default function CaptureScreen({ imageUrl, onRetake, onSave }: Props) {
   const [gestureAction, setGestureAction] = useState<"save" | "retake" | null>(null);
 
-  // Use refs so the action callbacks are always current without re-triggering effects
   const handleSaveRef = useRef<() => void>(null!);
   const onRetakeRef   = useRef<() => void>(null!);
 
@@ -33,7 +32,6 @@ export default function CaptureScreen({ imageUrl, onRetake, onSave }: Props) {
     gestureState: "waiting",
   });
 
-  // Confirm gesture after 500ms of continuous detection
   useEffect(() => {
     if (gestureAction) return;
     if (gesture !== "thumbs_up" && gesture !== "thumbs_down") return;
@@ -42,7 +40,6 @@ export default function CaptureScreen({ imageUrl, onRetake, onSave }: Props) {
     return () => clearTimeout(t);
   }, [gesture, gestureAction]);
 
-  // Execute the action 800ms after success indicator appears
   useEffect(() => {
     if (!gestureAction) return;
     const t = setTimeout(() => {
@@ -115,22 +112,22 @@ export default function CaptureScreen({ imageUrl, onRetake, onSave }: Props) {
         </div>
       )}
 
-      {/* Gesture hint — shows when no gesture is confirmed yet */}
+      {/* Gesture hint */}
       {!gestureAction && (
         <div className="absolute bottom-28 left-1/2 -translate-x-1/2">
-          <div className="glass-dark rounded-full px-5 py-2.5 flex items-center gap-4 text-xs tracking-wide">
+          <div className="glass rounded-pill px-5 py-2.5 flex items-center gap-4 text-xs tracking-wide">
             <div
               className={`flex items-center gap-1.5 transition-colors duration-200 ${
-                gesture === "thumbs_down" ? "text-white" : "text-white/35"
+                gesture === "thumbs_down" ? "text-white" : "text-white/40"
               }`}
             >
               <ThumbsDownIcon className="w-4 h-5" />
               Retake
             </div>
-            <span className="text-white/15">·</span>
+            <span className="text-white/20">·</span>
             <div
               className={`flex items-center gap-1.5 transition-colors duration-200 ${
-                gesture === "thumbs_up" ? "text-white" : "text-white/35"
+                gesture === "thumbs_up" ? "text-white" : "text-white/40"
               }`}
             >
               <ThumbsUpIcon className="w-4 h-5" />
@@ -144,22 +141,23 @@ export default function CaptureScreen({ imageUrl, onRetake, onSave }: Props) {
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4">
         <button
           onClick={onRetake}
-          className="glass-dark px-8 py-3 rounded-full text-white/70 text-sm tracking-widest uppercase hover:bg-white/10 transition-all duration-200"
+          className="glass-dark px-8 py-3 rounded-pill text-white/70 text-2xl tracking-widest uppercase hover:bg-white/10 transition-all duration-200"
         >
           Retake
         </button>
 
         <button
           onClick={handleSave}
-          className="px-8 py-3 rounded-full bg-white text-black text-sm font-medium tracking-widest uppercase hover:bg-white/90 transition-all duration-200"
+          className="btn btn-primary"
+          style={{ padding: "12px 28px" }}
         >
           Save
         </button>
       </div>
 
       {/* Top label */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 glass-dark rounded-full px-5 py-2">
-        <p className="text-white/40 text-xs tracking-widest uppercase">
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 glass rounded-pill px-5 py-2">
+        <p className="text-white/70 text-xs tracking-widest uppercase">
           Photo captured
         </p>
       </div>

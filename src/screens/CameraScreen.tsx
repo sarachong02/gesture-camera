@@ -29,8 +29,6 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
 
   const [countdownActive, setCountdownActive] = useState(false);
 
-  // Gesture detection is always enabled when camera is ready.
-  // The hook itself restricts to open-palm-only during countdown state.
   const { gesture, palmPosition, landmarksRef, isLoading, error: gestureError, peaceSignProgress, handSize } =
     useGestureDetection({ videoRef, enabled: isReady, gestureState });
 
@@ -48,15 +46,13 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
     }
 
     if (gestureState === "calibrated") {
-      // Pan/tilt the frame while the user pans with an open palm
       if (gesture === "open_palm" && palmPosition && calibrationRef.current) {
         const dx = palmPosition.x - calibrationRef.current.x;
         const dy = palmPosition.y - calibrationRef.current.y;
-        setPanX(-dx * PAN_SCALE); // negate: video is displayed scaleX(-1)
+        setPanX(-dx * PAN_SCALE);
         setPanY( dy * TILT_SCALE);
       }
 
-      // Trigger countdown after holding peace sign for PEACE_HOLD_MS
       if (gesture === "peace_sign" && peaceSignProgress >= 1 && !countdownActive) {
         setCountdownActive(true);
         setGestureState("countdown");
@@ -64,7 +60,6 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
     }
 
     if (gestureState === "countdown" && countdownActive) {
-      // Open palm is the only intentional cancel signal during countdown
       if (gesture === "open_palm") {
         setCountdownActive(false);
         setGestureState("calibrated");
@@ -93,8 +88,8 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
   const error = cameraError ?? gestureError;
   if (error) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-[#0a0a0a] gap-4">
-        <p className="text-white/40 text-sm">{error}</p>
+      <div className="w-full h-full flex flex-col items-center justify-center bg-sand gap-4">
+        <p className="text-primary/50 text-sm">{error}</p>
       </div>
     );
   }
@@ -137,8 +132,8 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
       {/* ── Loading ───────────────────────────────────────────────────────── */}
       {(isLoading || !isReady) && (
         <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-4 animate-fade-in">
-          <div className="w-8 h-8 border border-white/30 border-t-white/80 rounded-full animate-spin" />
-          <p className="text-white/40 text-xs tracking-widest uppercase">
+          <div className="w-8 h-8 border border-primary/30 border-t-primary rounded-full animate-spin" />
+          <p className="text-white/50 text-xs tracking-widest uppercase">
             {!isReady ? "Starting camera…" : "Loading gesture model…"}
           </p>
         </div>
@@ -146,7 +141,7 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
 
       {/* ── Calibrated banner ─────────────────────────────────────────────── */}
       {gestureState === "calibrated" && !countdownActive && (
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 glass-dark rounded-full px-6 py-2 animate-fade-in">
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 glass rounded-full px-6 py-2 animate-fade-in">
           <p className="text-green-300 text-xs tracking-widest uppercase">
             Calibration Complete
           </p>
@@ -175,13 +170,13 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
               <circle
                 cx="50" cy="50" r="44"
                 fill="none"
-                stroke="rgba(255,255,255,0.08)"
+                stroke="rgba(26,101,123,0.20)"
                 strokeWidth="5"
               />
               <circle
                 cx="50" cy="50" r="44"
                 fill="none"
-                stroke="#4ade80"
+                stroke="#B5D7C5"
                 strokeWidth="5"
                 strokeLinecap="round"
                 strokeDasharray={`${2 * Math.PI * 44}`}
@@ -190,7 +185,7 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-white/60 text-xs tracking-widest uppercase">
+              <span className="text-white/70 text-xs tracking-widest uppercase">
                 {peaceSignProgress >= 1 ? "Go!" : `${Math.ceil(3 * (1 - peaceSignProgress))}s`}
               </span>
             </div>

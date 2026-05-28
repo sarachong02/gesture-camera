@@ -519,7 +519,166 @@ Start → Phone number → Filter selection → Tutorial (5 gesture steps) → C
 
 ---
 
+## Handoff — 2026-05-27 (Session 7)
+
+### What was worked on
+
+Visual redesign pass: new start screen matching the updated Figma, and a global styling overhaul covering backgrounds, text color, and button treatment.
+
+---
+
+#### Change 1 — Start screen redesigned (Figma node 56:180)
+
+`StartScreen.tsx` was rebuilt to match the new Figma frame.
+
+- **Layered backgrounds**: `start_bg_city.jpg` (Seattle skyline at dusk) as the base layer, with `start_bg_overlay.jpg` (dark atmospheric wash) composited on top at 75% opacity. Both images live in `images/` and are imported as Vite asset URLs.
+- **"Photo Spot"** headline in Gilda Display Regular, `clamp(56px, 8vw, 100px)`, white, top-aligned with ~10% padding from the top edge.
+- **"CAPTURE AND SHARE THE MOMENT"** subtitle in Inter Bold, `clamp(18px, 3vw, 40px)`, white, immediately below the headline.
+- **Start button** reuses `.btn .btn-primary` — no custom button styling needed.
+
+Previous `start_background.png` (photobooth sign) is no longer used by this screen.
+
+**Key files changed:**
+- `src/screens/StartScreen.tsx` — full rewrite of content; logic (`onStart` prop) unchanged
+- `images/start_bg_city.jpg` — new asset
+- `images/start_bg_overlay.jpg` — new asset
+
+---
+
+#### Change 2 — Global background
+
+`background_img.png` is now the app-wide background, set as a CSS `background-image` with `cover` + `fixed` on `html, body, #root` in `index.css`. The previous solid `#F5EDDE` fill is removed.
+
+Screens that previously had an opaque `bg-sand` class now show the background image through:
+- `PhoneScreen`, `TutorialScreen`, `CameraGateScreen`, `ThankYouScreen` — `bg-sand` removed
+- `CaptureScreen`, `FilterScreen`, `CameraScreen` — `bg-black` / camera backgrounds preserved
+
+---
+
+#### Change 3 — Button redesign (Figma node 52:12)
+
+All `.btn` buttons restyled to match the Figma glass button spec:
+
+| Property | Before | After |
+|---|---|---|
+| Font | Inter 600, 18px | Gilda Display 400, **24px** |
+| Border radius | `999px` (pill) | **19px** |
+| Border | `rgba(26,101,123,0.30)` semi-transparent | `1px solid #1A657C` solid teal |
+| Background (primary) | Teal glass `rgba(26,101,123,0.22)` | Sandy glass **`rgba(245,238,222,0.20)`** |
+| Blur | 16px | 5px |
+
+`.btn-ghost` and `.btn-secondary` updated to the same shape + border system with sand text. No component files were changed — purely CSS.
+
+Additionally, the inline `style={{ fontSize: 14 }}` override was removed from `CaptureScreen`'s Save button, and the Retake button was bumped from `text-sm` to `text-2xl` so both buttons meet the 24px target.
+
+---
+
+#### Change 4 — Text color and minimum size
+
+- Global text color changed from `#1A4A56` to `#F5EDDE` on `html, body, #root`.
+- All `text-primary` / `text-primary-dark` / `text-primary/X` Tailwind classes overridden via explicit CSS rules to render as sand (`#F5EDDE`) at matching opacity.
+- `text-xs` and `text-sm` overridden in the Tailwind utilities layer to `1rem` (16px) — enforces the 16px minimum floor without touching individual files.
+
+**Key files changed:**
+- `src/index.css` — global base, button component layer, text overrides, utility overrides
+- `src/screens/PhoneScreen.tsx` — removed `bg-sand`
+- `src/screens/TutorialScreen.tsx` — removed `bg-sand`; removed `text-sm` + inline `fontSize:14` from Back button
+- `src/screens/CameraGateScreen.tsx` — removed `bg-sand`
+- `src/screens/ThankYouScreen.tsx` — removed `bg-sand`
+- `src/screens/CaptureScreen.tsx` — removed `fontSize:14` inline override; Retake button `text-sm` → `text-2xl`
+
+---
+
+### Suggested next steps
+
+- `start_background.png` (the photobooth sign image from the previous session) is now unused — it can be deleted from `images/` to reduce bundle size.
+- The `background_img.png` global background shows through all non-camera screens. If any screen needs a local tint or overlay for legibility (e.g. `PhoneScreen` in bright ambient light), add a semi-transparent `bg-black/30` div without touching the global background.
+- Button padding (`15px 40px`) is uniform across all `.btn` variants. If specific screens need tighter buttons (e.g. the Back button in TutorialScreen), add a local `style={{ padding: ... }}` override rather than creating a new variant.
+
+---
+
+## Handoff — 2026-05-28 (Session 8)
+
+### What was worked on
+
+Added a consent screen between the capture review and the thank-you screen, then iteratively refined its visual design.
+
+---
+
+#### Change 1 — Consent screen (new)
+
+New `ConsentScreen` inserted into the flow immediately before `ThankYouScreen`. Purpose: ask the user whether to upload their photo to the ferry's digital photo wall.
+
+**Content:**
+- Header: "Share your picture"
+- Subheading: "Share your memories on the digital photo wall located on the ferry"
+- Body: "The photo will stay up for 48 hours, and then will be erased."
+- Two buttons: "Yes, Share my memory!" (primary) and "No, I decline" (ghost) — both navigate to `ThankYouScreen`
+
+**Routing:**
+- `CaptureScreen.onSave` now routes → `"consent"` (was `"thankyou"`)
+- `ConsentScreen.onConsent(agreed: boolean)` stores the choice in `_consentGiven` state in `App.tsx` for future backend integration, then routes → `"thankyou"`
+- No backend upload logic wired — placeholder only
+
+**Updated flow:**
+```
+… → Capture → Consent → Thank You
+```
+
+**Key files changed:**
+- `src/types.ts` — `"consent"` added to `AppScreen` union
+- `src/screens/ConsentScreen.tsx` — new screen
+- `src/App.tsx` — `_consentGiven` state; `onSave` rerouted; `ConsentScreen` imported and rendered
+
+---
+
+#### Change 2 — Consent screen visual design
+
+`ConsentScreen` was styled to closely mirror `ThankYouScreen`'s layout with one deliberate difference: `photo_wall_background.png` as its full-cover background image (imported as a Vite asset URL, absolutely positioned).
+
+Shared with `ThankYouScreen`:
+- Root: `w-full h-full relative flex flex-col items-center justify-center animate-fade-in px-8`
+- Icon in double-ring container (`w-24 h-24 rounded-full border border-primary/20`) with `animate-pulse-ring`; upload-arrow SVG (`strokeWidth={1.2}`)
+- Headline: `font-display text-4xl font-normal … text-center mb-5 animate-slide-up leading-snug`
+- Divider: `w-12 h-px … mb-6 animate-slide-up`
+- Body copy: `text-sm tracking-wide text-center max-w-xs leading-relaxed animate-slide-up`
+- Wave SVG decoration at bottom (identical paths and fills)
+
+Consent-specific styling:
+- All text (icon, headline, divider, body) uses `text-white` / `bg-white/20` — pure `#FFFFFF`, no opacity modifier on the paragraphs
+- Buttons laid out **horizontally** (`flex-row gap-3 w-full max-w-lg`) with `flex-1` on each so they share width equally
+- Button font size: `text-xl` (20px) — overrides the global `.btn` 24px via Tailwind's utilities layer
+
+**Key files changed:**
+- `src/screens/ConsentScreen.tsx` — layout, background image, text/button styling
+- `images/photo_wall_background.png` — pre-existing asset, now used
+
+---
+
+### Suggested next steps
+
+- `_consentGiven` is stored in `App` state but never read. When the SMS / upload backend is wired, pass it into the relevant handler alongside `_phoneNumber`.
+- The consent screen currently has no gesture-based interaction (unlike CaptureScreen). If the booth is used hands-free, a thumbs-up / thumbs-down shortcut mirroring CaptureScreen's gesture flow would keep the experience consistent.
+- `photo_wall_background.png` is a static image. Replacing it with a live feed of the actual photo wall (even a cached periodic fetch) would reinforce the "your photo will appear here" message.
+
+---
+
+---
+
 ## Changelog
+
+### 2026-05-28 (Session 8)
+
+- **Consent screen added** — new `ConsentScreen` inserted between `CaptureScreen` and `ThankYouScreen`. Asks the user to consent to uploading their photo to the ferry's digital photo wall. Both "Yes" and "No" paths proceed to `ThankYouScreen`; consent choice stored in `_consentGiven` state for future backend use. `"consent"` added to `AppScreen` type.
+- **Consent screen styling** — mirrors `ThankYouScreen` layout (icon ring, headline, divider, body copy, wave decoration, animations). Background is `photo_wall_background.png`. All text is pure white (`#FFFFFF`). Buttons are horizontal (`flex-row`), equal width (`flex-1`), 20px font size.
+
+### 2026-05-27 (Session 7)
+
+- **Start screen redesigned** — new layered backgrounds (`start_bg_city.jpg` + `start_bg_overlay.jpg` at 75% opacity), "Photo Spot" Gilda Display headline, "CAPTURE AND SHARE THE MOMENT" Inter Bold subtitle, reusing existing `.btn .btn-primary` for the Start button. Matches Figma node 56:180.
+- **Global app background** — `background_img.png` applied as a CSS `background-image: cover fixed` on `#root`. Removed `bg-sand` from PhoneScreen, TutorialScreen, CameraGateScreen, ThankYouScreen; camera screens (`CaptureScreen`, `FilterScreen`, `CameraScreen`) retain their own dark backgrounds.
+- **Buttons restyled** — `.btn` changed to Gilda Display 24px, 19px border-radius, sandy glass background, 1px solid teal border. Matches Figma node 52:12. Inline `fontSize:14` override removed from CaptureScreen; Retake button bumped to 24px.
+- **Text color** — global text changed to `#F5EDDE` (sand); all `text-primary` Tailwind variants overridden to sand at matching opacity.
+- **Minimum text size** — `text-xs` and `text-sm` overridden to 16px via the Tailwind utilities layer.
 
 ### 2026-05-27 (Session 6)
 

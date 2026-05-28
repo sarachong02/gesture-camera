@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Gilda+Display&family=Inter:wght@400;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,24 +17,138 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #0a0a0a;
-    color: #f5f5f5;
+    background-image: url('../images/background_img.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: #F5EDDE;
     font-family: "Inter", system-ui, sans-serif;
   }
 }
 
-@layer utilities {
-  .glass {
-    background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+/* ── Text color overrides — sand throughout ──────────────────────────────── */
+.text-primary       { color: #F5EDDE !important; }
+.text-primary-dark  { color: #F5EDDE !important; }
+.text-primary\/20   { color: rgba(245, 237, 222, 0.20) !important; }
+.text-primary\/30   { color: rgba(245, 237, 222, 0.30) !important; }
+.text-primary\/40   { color: rgba(245, 237, 222, 0.40) !important; }
+.text-primary\/50   { color: rgba(245, 237, 222, 0.50) !important; }
+.text-primary\/55   { color: rgba(245, 237, 222, 0.55) !important; }
+.text-primary\/60   { color: rgba(245, 237, 222, 0.60) !important; }
+.text-primary\/80   { color: rgba(245, 237, 222, 0.80) !important; }
+
+/* ── Button components ───────────────────────────────────────────────────── */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: "Gilda Display", Georgia, serif;
+    font-weight: 400;
+    font-size: 24px;
+    letter-spacing: 0.02em;
+    border-radius: 19px;
+    border: 1px solid #1A657C;
+    cursor: pointer;
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    text-decoration: none;
+    white-space: nowrap;
   }
 
+  .btn-primary {
+    background: rgba(245, 238, 222, 0.20);
+    color: #F5EDDE;
+    border-color: #1A657C;
+    box-shadow: 0 4px 20px rgba(26, 101, 123, 0.15);
+    padding: 15px 40px;
+  }
+  .btn-primary:hover {
+    background: rgba(245, 238, 222, 0.32);
+    box-shadow: 0 8px 32px rgba(26, 101, 123, 0.25);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+    background: rgba(245, 238, 222, 0.40);
+  }
+  .btn-primary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-secondary {
+    background: rgba(245, 238, 222, 0.15);
+    color: #F5EDDE;
+    border-color: #1A657C;
+    box-shadow: 0 4px 20px rgba(26, 101, 123, 0.12);
+    padding: 15px 40px;
+  }
+  .btn-secondary:hover {
+    background: rgba(245, 238, 222, 0.28);
+    box-shadow: 0 8px 32px rgba(26, 101, 123, 0.22);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: #F5EDDE;
+    border-color: rgba(245, 238, 222, 0.35);
+    padding: 15px 40px;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .btn-ghost:hover {
+    background: rgba(245, 238, 222, 0.10);
+  }
+  .btn-ghost:disabled {
+    opacity: 0;
+    cursor: default;
+    pointer-events: none;
+  }
+}
+
+/* ── Glass surface utilities ─────────────────────────────────────────────── */
+@layer utilities {
+  /* Minimum 16px text size */
+  .text-xs { font-size: 1rem; }
+  .text-sm { font-size: 1rem; }
+
+  /* Teal glass — for camera-screen overlays and labels */
+  .glass {
+    background: rgba(26, 101, 123, 0.22);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(26, 101, 123, 0.30);
+  }
+
+  /* Dark semi-opaque glass — for camera overlays needing high legibility */
   .glass-dark {
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(19, 78, 94, 0.62);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
+
+  /* Light frosted card — panels on sand backgrounds */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 8px 32px rgba(26, 101, 123, 0.14);
+  }
+
+  /* Teal-tinted frosted card */
+  .glass-card-teal {
+    background: rgba(26, 101, 123, 0.18);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(26, 101, 123, 0.28);
+    box-shadow: 0 8px 32px rgba(26, 101, 123, 0.18);
   }
 }

@@ -30,16 +30,16 @@ export default function GestureFeedback({ gesture, gestureState, peaceSignProgre
   function getDotColor(): string {
     if (gesture === "open_palm")  return "bg-green-400";
     if (gesture === "peace_sign") return "bg-green-400";
-    return "bg-white/20";
+    return "bg-white/25";
   }
 
   const label = getLabel();
   if (!label) return null;
 
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 glass-dark rounded-full px-5 py-2.5 animate-fade-in">
+    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 glass rounded-pill px-5 py-2.5 animate-fade-in">
       <span className={`w-2 h-2 rounded-full ${getDotColor()} transition-colors duration-300`} />
-      <span className="text-white/70 text-xs tracking-wide">{label}</span>
+      <span className="text-white/85 text-xs tracking-wide">{label}</span>
     </div>
   );
 }

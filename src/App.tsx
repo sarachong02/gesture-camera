@@ -7,6 +7,7 @@ import TutorialScreen from "./screens/TutorialScreen";
 import CameraGateScreen from "./screens/CameraGateScreen";
 import CameraScreen from "./screens/CameraScreen";
 import CaptureScreen from "./screens/CaptureScreen";
+import ConsentScreen from "./screens/ConsentScreen";
 import ThankYouScreen from "./screens/ThankYouScreen";
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
   const [_phoneNumber, setPhoneNumber] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState<FilterId>("no_filter");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [_consentGiven, setConsentGiven] = useState<boolean | null>(null);
 
   function handlePhoneSubmit(phone: string) {
     setPhoneNumber(phone);
@@ -69,7 +71,15 @@ export default function App() {
         <CaptureScreen
           imageUrl={capturedImage}
           onRetake={handleRetake}
-          onSave={() => setScreen("thankyou")}
+          onSave={() => setScreen("consent")}
+        />
+      )}
+      {screen === "consent" && (
+        <ConsentScreen
+          onConsent={(agreed) => {
+            setConsentGiven(agreed);
+            setScreen("thankyou");
+          }}
         />
       )}
       {screen === "thankyou" && <ThankYouScreen />}

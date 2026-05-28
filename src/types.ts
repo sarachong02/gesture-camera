@@ -1,4 +1,4 @@
-export type AppScreen = "start" | "phone" | "filter" | "tutorial" | "camera_gate" | "camera" | "capture" | "thankyou";
+export type AppScreen = "start" | "phone" | "filter" | "tutorial" | "camera_gate" | "camera" | "capture" | "consent" | "thankyou";
 
 export type FilterId = "no_filter" | "jellyfish" | "orca" | "harbor_seal" | "geoduck_clam" | "giant_pacific_octopus";
 

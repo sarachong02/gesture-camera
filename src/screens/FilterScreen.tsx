@@ -29,7 +29,6 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
   const [qrPhase, setQrPhase] = useState<"scanning" | "detected">("scanning");
   const qrVideoRef = useRef<HTMLVideoElement>(null);
 
-  // Clone the existing camera stream into the QR viewfinder when the modal opens
   useEffect(() => {
     if (!qrModalOpen || !qrVideoRef.current || !videoRef.current) return;
     const stream = videoRef.current.srcObject as MediaStream | null;
@@ -75,29 +74,29 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
       {/* Camera loading */}
       {!isReady && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
-          <div className="w-8 h-8 border border-white/30 border-t-white/80 rounded-full animate-spin" />
+          <div className="w-8 h-8 border border-primary/30 border-t-primary rounded-full animate-spin" />
         </div>
       )}
 
       {/* Top label */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 glass-dark rounded-full px-5 py-2 pointer-events-none">
-        <p className="text-white/60 text-xs tracking-[0.25em] uppercase">Choose your border</p>
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 glass rounded-full px-5 py-2 pointer-events-none">
+        <p className="text-white/80 text-xs tracking-[0.25em] uppercase">Choose your border</p>
       </div>
 
       {/* QR scan modal */}
       {qrModalOpen && (
-        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50">
+        <div className="absolute inset-0 bg-[rgba(19,78,94,0.82)] flex flex-col items-center justify-center z-50" style={{ backdropFilter: "blur(8px)" }}>
           <style>{`@keyframes qr-scan{0%,100%{transform:translateY(0)}50%{transform:translateY(200px)}}`}</style>
 
-          <p className="text-white/50 text-xs tracking-[0.2em] uppercase mb-5">
+          <p className="text-white/60 text-xs tracking-[0.2em] uppercase mb-5">
             Hold a QR code up to the camera
           </p>
 
-          {/* Viewfinder: live camera + overlays */}
-          <div className={`relative w-56 h-56 overflow-hidden rounded-lg mb-6 transition-all duration-300 ${
+          {/* Viewfinder */}
+          <div className={`relative w-56 h-56 overflow-hidden rounded-xl mb-6 transition-all duration-300 ${
             qrPhase === "detected"
               ? "ring-2 ring-green-400 shadow-[0_0_24px_rgba(74,222,128,0.55)]"
-              : "ring-1 ring-white/20"
+              : "ring-1 ring-primary/40"
           }`}>
             <video
               ref={qrVideoRef}
@@ -107,19 +106,18 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
               muted
             />
 
-            {/* Sweep line while scanning */}
             {qrPhase === "scanning" && (
               <div
-                className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent pointer-events-none"
+                className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent pointer-events-none"
                 style={{ animation: "qr-scan 2s ease-in-out infinite" }}
               />
             )}
 
-            {/* Corner brackets */}
-            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white/80 pointer-events-none" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white/80 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white/80 pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white/80 pointer-events-none" />
+            {/* Corner brackets — teal */}
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-primary-light/80 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-primary-light/80 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-primary-light/80 pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-primary-light/80 pointer-events-none" />
 
             {/* Success overlay */}
             {qrPhase === "detected" && (
@@ -134,7 +132,7 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
           </div>
 
           <p className={`text-sm tracking-[0.2em] uppercase transition-colors duration-300 ${
-            qrPhase === "detected" ? "text-green-400" : "text-white"
+            qrPhase === "detected" ? "text-green-400" : "text-white/80"
           }`}>
             {qrPhase === "scanning" ? "Scanning QR Code…" : "QR Code Detected"}
           </p>
@@ -142,7 +140,7 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
           {qrPhase === "scanning" && (
             <button
               onClick={() => setQrModalOpen(false)}
-              className="mt-10 text-white/35 text-xs tracking-widest uppercase"
+              className="mt-10 text-white/40 text-xs tracking-widest uppercase hover:text-white/60 transition-colors"
             >
               Cancel
             </button>
@@ -151,7 +149,7 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
       )}
 
       {/* Bottom filter bar */}
-      <div className="absolute bottom-0 left-0 right-0 px-6 pt-8 pb-8 bg-gradient-to-t from-black/85 via-black/50 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 px-6 pt-8 pb-8 bg-gradient-to-t from-black/90 via-black/55 to-transparent">
         <div className="flex items-end justify-between gap-4">
 
           {/* Filter option cards */}
@@ -170,19 +168,18 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
                   disabled={!isEnabled}
                   className={`relative flex flex-col items-center gap-2 px-3 pt-2.5 pb-3 rounded-2xl min-w-[80px] transition-all duration-200 select-none
                     ${isActive
-                      ? "bg-white/20 border border-white/60 text-white"
+                      ? "bg-primary/25 border border-primary-light/60 text-white"
                       : isEnabled
-                        ? "bg-black/50 border border-white/15 text-white/55 active:bg-white/10"
+                        ? "bg-black/50 border border-white/12 text-white/55 active:bg-primary/10"
                         : "bg-black/30 border border-white/5 text-white/20 cursor-not-allowed"
                     }
                   `}
                 >
-                  {/* Border thumbnail */}
                   <div className="w-14 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-black/30">
                     {hasOverlay ? (
                       <img src={filterOverlay} alt="" className="w-full h-full object-cover" />
                     ) : isNoFilter ? (
-                      <svg viewBox="0 0 56 40" className="w-full h-full opacity-25" fill="none">
+                      <svg viewBox="0 0 56 40" className="w-full h-full opacity-30" fill="none">
                         <line x1="8" y1="6" x2="48" y2="34" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
                         <line x1="48" y1="6" x2="8" y2="34" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
                       </svg>
@@ -202,14 +199,13 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
                   )}
 
                   {isActive && (
-                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-white/80" />
+                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary-light/80" />
                   )}
                 </button>
               );
 
               if (idx !== 0) return [card];
 
-              // Insert QR/Custom button right after "No Filter"
               const jellyfishOverlay = FILTER_OVERLAYS["jellyfish"];
               const isJellyfishActive = activeFilter === "jellyfish";
               const qrBtn = (
@@ -224,8 +220,8 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
                   }}
                   className={`relative flex flex-col items-center gap-2 px-3 pt-2.5 pb-3 rounded-2xl min-w-[80px] transition-all duration-200 select-none
                     ${isJellyfishActive
-                      ? "bg-white/20 border border-white/60 text-white"
-                      : "bg-black/50 border border-white/15 text-white/55 active:bg-white/10"
+                      ? "bg-primary/25 border border-primary-light/60 text-white"
+                      : "bg-black/50 border border-white/12 text-white/55 active:bg-primary/10"
                     }
                   `}
                 >
@@ -251,7 +247,7 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
                     Custom
                   </span>
                   {isJellyfishActive && (
-                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-white/80" />
+                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary-light/80" />
                   )}
                 </button>
               );
@@ -263,7 +259,7 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
           {/* Continue */}
           <button
             onClick={() => onConfirm(activeFilter)}
-            className="flex-shrink-0 px-8 py-4 rounded-full border border-white/30 bg-white/10 text-white text-sm tracking-widest uppercase active:bg-white/20 transition-all duration-200"
+            className="btn btn-primary flex-shrink-0"
           >
             Continue
           </button>

@@ -4,7 +4,6 @@ interface Props {
   onSubmit: (phoneNumber: string) => void;
 }
 
-// Existing format logic preserved unchanged
 function formatDisplay(raw: string) {
   const digits = raw.replace(/\D/g, "").slice(0, 10);
   if (digits.length <= 3) return digits;
@@ -17,7 +16,6 @@ const PAD_KEYS = ["1","2","3","4","5","6","7","8","9","","0","del"] as const;
 export default function PhoneScreen({ onSubmit }: Props) {
   const [value, setValue] = useState("");
 
-  // Existing submit logic preserved unchanged
   function handleSubmit() {
     const digits = value.replace(/\D/g, "");
     if (digits.length >= 10) onSubmit(digits);
@@ -34,25 +32,25 @@ export default function PhoneScreen({ onSubmit }: Props) {
   const isValid = value.replace(/\D/g, "").length >= 10;
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-[#0a0a0a] animate-fade-in px-6">
+    <div className="w-full h-full flex flex-col items-center justify-center animate-fade-in px-6">
       <div className="flex flex-col items-center w-full max-w-sm gap-8">
 
         {/* Header */}
         <div className="text-center animate-slide-up">
-          <h2 className="text-3xl font-light tracking-widest uppercase text-white/90 mb-2">
+          <h2 className="font-display text-4xl font-normal text-primary mb-2">
             Your Number
           </h2>
-          <p className="text-white/30 text-sm tracking-wide">
+          <p className="text-primary/50 text-sm tracking-wide">
             We'll text your photo here
           </p>
         </div>
 
         {/* Phone number display */}
         <div className="w-full animate-slide-up">
-          <div className="w-full text-center text-3xl font-light tracking-[0.15em] text-white/90 pb-4 border-b border-white/20 min-h-[56px] flex items-end justify-center">
+          <div className="w-full text-center text-3xl font-light tracking-[0.15em] text-primary pb-4 border-b border-primary/20 min-h-[56px] flex items-end justify-center">
             {value.length > 0
               ? formatDisplay(value)
-              : <span className="text-white/15">(206) 555-0100</span>
+              : <span className="text-primary/20">(206) 555-0100</span>
             }
           </div>
         </div>
@@ -72,8 +70,8 @@ export default function PhoneScreen({ onSubmit }: Props) {
                   "h-16 rounded-2xl flex items-center justify-center select-none",
                   "transition-all duration-75 active:scale-95",
                   isDel
-                    ? "bg-white/5 border border-white/8 text-white/50 hover:bg-white/10"
-                    : "bg-white/10 border border-white/10 text-white text-2xl font-light hover:bg-white/16",
+                    ? "bg-primary/5 border border-primary/10 text-primary/50 hover:bg-primary/10"
+                    : "bg-primary/8 border border-primary/12 text-primary text-2xl font-light hover:bg-primary/14",
                 ].join(" ")}
               >
                 {isDel ? (
@@ -99,7 +97,7 @@ export default function PhoneScreen({ onSubmit }: Props) {
         </div>
 
         {/* Privacy note */}
-        <p className="text-white/25 text-xs tracking-wide text-center leading-relaxed animate-slide-up">
+        <p className="text-primary/30 text-xs tracking-wide text-center leading-relaxed animate-slide-up">
           Your photo will be texted to this number and deleted immediately after the session.
         </p>
 
@@ -108,7 +106,7 @@ export default function PhoneScreen({ onSubmit }: Props) {
           type="button"
           onClick={handleSubmit}
           disabled={!isValid}
-          className="w-full py-4 rounded-full border border-white/20 text-white/80 text-sm tracking-widest uppercase transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-white/10 hover:enabled:border-white/40 animate-slide-up"
+          className="btn btn-primary w-full animate-slide-up"
         >
           Continue
         </button>

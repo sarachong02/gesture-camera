@@ -82,19 +82,16 @@ export default function TutorialScreen({ onComplete, onSkip }: Props) {
 
   const gestureMatches = gesture === current.requiredGesture;
 
-  // Reset success state when step changes
   useEffect(() => {
     setSucceeded(false);
   }, [step]);
 
-  // Require 500ms of continuous correct gesture before marking success
   useEffect(() => {
     if (!gestureMatches || succeeded) return;
     const t = setTimeout(() => setSucceeded(true), 500);
     return () => clearTimeout(t);
   }, [gestureMatches, succeeded]);
 
-  // Auto-advance 800ms after success so the indicator is visible briefly
   useEffect(() => {
     if (!succeeded) return;
     const t = setTimeout(() => {
@@ -112,12 +109,12 @@ export default function TutorialScreen({ onComplete, onSkip }: Props) {
   })();
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#0a0a0a] animate-fade-in">
+    <div className="w-full h-full flex flex-col animate-fade-in">
 
-      {/* Camera viewport — primary visual focus, roughly 2/3 of screen height */}
+      {/* Camera viewport */}
       <div className="flex justify-center pt-4 px-4 flex-shrink-0">
         <div
-          className="relative overflow-hidden rounded-2xl border border-white/10"
+          className="relative overflow-hidden rounded-2xl border border-primary/25"
           style={{ width: "min(60vh, 88vw)", aspectRatio: "1 / 1" }}
         >
           <video
@@ -128,18 +125,18 @@ export default function TutorialScreen({ onComplete, onSkip }: Props) {
             muted
           />
 
-          {/* Gesture reference badge — bottom-right corner */}
+          {/* Gesture reference badge */}
           <div
             className={`absolute bottom-3 right-3 w-12 h-12 rounded-full border flex items-center justify-center transition-colors duration-300 ${
               gestureMatches || succeeded
                 ? "border-green-400/40 bg-green-400/10"
-                : "border-white/20 bg-black/50"
+                : "border-primary/25 bg-black/40"
             }`}
           >
             {current.illustration}
           </div>
 
-          {/* Subtle glow when gesture is matching but not yet confirmed */}
+          {/* Subtle glow when gesture matches */}
           {gestureMatches && !succeeded && (
             <div className="absolute inset-0 bg-green-400/10 pointer-events-none" />
           )}
@@ -164,8 +161,8 @@ export default function TutorialScreen({ onComplete, onSkip }: Props) {
           {/* Loading overlay */}
           {(!isReady || isLoading) && (
             <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2">
-              <div className="w-6 h-6 border border-white/30 border-t-white/80 rounded-full animate-spin" />
-              <p className="text-white/30 text-xs tracking-widest uppercase">
+              <div className="w-6 h-6 border border-primary/30 border-t-primary rounded-full animate-spin" />
+              <p className="text-white/50 text-xs tracking-widest uppercase">
                 {!isReady ? "Starting camera…" : "Loading…"}
               </p>
             </div>
@@ -177,23 +174,23 @@ export default function TutorialScreen({ onComplete, onSkip }: Props) {
       <div className="flex-1 flex flex-col items-center justify-center px-6 gap-5 min-h-0">
 
         <div className="flex flex-col items-center gap-4 max-w-sm text-center">
-          <h2 className="text-2xl font-light tracking-widest uppercase text-white/90">
+          <h2 className="font-display text-3xl font-normal text-primary">
             {current.title}
           </h2>
-          <p className="text-white/50 text-base leading-relaxed">
+          <p className="text-primary/60 text-base leading-relaxed">
             {current.description}
           </p>
         </div>
 
         {/* Real-time gesture feedback */}
         <div
-          className={`flex items-center gap-2.5 px-5 py-2.5 rounded-full text-sm tracking-wide glass-dark transition-all duration-300 ${
-            succeeded || gestureMatches ? "text-green-400" : "text-white/40"
+          className={`flex items-center gap-2.5 px-5 py-2.5 rounded-pill text-sm tracking-wide glass-card-teal transition-all duration-300 ${
+            succeeded || gestureMatches ? "text-green-600" : "text-primary/60"
           }`}
         >
           <span
             className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors duration-300 ${
-              gestureMatches || succeeded ? "bg-green-400" : "bg-white/20"
+              gestureMatches || succeeded ? "bg-green-500" : "bg-primary/30"
             }`}
           />
           {feedbackText}
@@ -205,25 +202,25 @@ export default function TutorialScreen({ onComplete, onSkip }: Props) {
             <div
               key={i}
               className={`rounded-full transition-all duration-300 ${
-                i === step ? "w-5 h-2 bg-white/70" : "w-2 h-2 bg-white/20"
+                i === step ? "w-5 h-2 bg-primary" : "w-2 h-2 bg-primary/20"
               }`}
             />
           ))}
         </div>
       </div>
 
-      {/* Navigation — Back on left, Skip on bottom-right */}
+      {/* Navigation */}
       <div className="flex items-center justify-between px-8 pb-8">
         <button
           onClick={() => setStep((s) => s - 1)}
           disabled={isFirst}
-          className="px-8 py-3.5 rounded-full border border-white/15 text-white/50 text-sm tracking-widest uppercase transition-all duration-200 disabled:opacity-0 hover:enabled:bg-white/10 hover:enabled:border-white/30 hover:enabled:text-white/80"
+          className="btn btn-ghost tracking-widest uppercase"
         >
           Back
         </button>
         <button
           onClick={onSkip}
-          className="glass-dark px-5 py-2.5 rounded-full text-white/40 text-sm tracking-widest uppercase hover:text-white/70 transition-colors duration-200"
+          className="glass-card px-5 py-2.5 rounded-pill text-primary/50 text-sm tracking-widest uppercase hover:text-primary/80 transition-colors duration-200"
         >
           Skip Tutorial
         </button>
