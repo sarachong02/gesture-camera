@@ -35,6 +35,27 @@ npm install
 npm run dev
 ```
 
+## Deploying to GitHub Pages
+
+**One-command deploy** (builds then pushes `dist/` to the `gh-pages` branch):
+
+```bash
+npm run deploy
+```
+
+**First-time setup:**
+
+1. Push the repo to GitHub (remote: `https://github.com/sarachong02/gesture-camera.git`).
+2. In the repo → **Settings → Pages**, set Source to **Deploy from a branch** and select the `gh-pages` branch / `/ (root)`.
+3. Run `npm run deploy` from your local machine whenever you want to publish a new build.
+
+The app will be live at: `https://sarachong02.github.io/gesture-camera/`
+
+**Notes:**
+- `vite.config.ts` sets `base: "/gesture-camera/"` so all asset URLs resolve correctly under the subpath.
+- `public/coi-serviceworker.js` adds the `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers at runtime via a service worker — GitHub Pages cannot set these headers natively, but they are required for MediaPipe's SharedArrayBuffer WASM.
+- `public/.nojekyll` prevents GitHub Pages from running Jekyll, which would otherwise ignore `_`-prefixed files.
+
 ---
 
 ## Handoff — 2026-05-24 (Session 2)
