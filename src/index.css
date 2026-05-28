@@ -130,25 +130,21 @@
   }
 }
 
-/* ── iOS Safari animation fix (unlayered — overrides @layer utilities) ──────
- * iOS Safari can freeze CSS animations at their initial keyframe, leaving
- * every element with animate-fade-in / animate-slide-up stuck at opacity:0.
- * These rules are outside @layer so they take precedence over Tailwind's
- * @layer utilities definitions, ensuring content is always visible on iOS.
- * !important is added as belt-and-suspenders insurance against the minifier
- * reordering rules in the output bundle.
- * The fade/slide visual effects are intentionally skipped on iOS in exchange
- * for reliable visibility. */
-@supports (-webkit-touch-callout: none) {
-  .animate-fade-in {
-    animation: none !important;
-    opacity: 1 !important;
-  }
-  .animate-slide-up {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-  }
+/* ── iOS Safari animation fix ────────────────────────────────────────────────
+ * iOS Safari freezes CSS animations at their initial keyframe (opacity:0).
+ * The .ios class is stamped on <html> by main.tsx before React mounts,
+ * using navigator.maxTouchPoints > 1 (reliable on all iPadOS versions).
+ * Two-class specificity (.ios .animate-X) beats Tailwind's single-class
+ * definition regardless of source order — no @supports or !important needed.
+ * TEMP: remove alongside the _isIOS block in main.tsx when no longer needed. */
+.ios .animate-fade-in {
+  animation: none !important;
+  opacity: 1 !important;
+}
+.ios .animate-slide-up {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: translateY(0) !important;
 }
 
 /* ── Glass surface utilities ─────────────────────────────────────────────── */

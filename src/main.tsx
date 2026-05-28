@@ -58,6 +58,15 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   }
 }
 
+// ── TEMP: iOS/iPadOS detection — stamp class before React mounts ───────────
+// maxTouchPoints > 1 is more reliable than CSS.supports('-webkit-touch-callout')
+// on newer iPadOS. The 'ios' class drives both CSS animation fixes and routing.
+const _isIOS = navigator.maxTouchPoints > 1 || CSS.supports('-webkit-touch-callout', 'none');
+if (_isIOS) {
+  document.documentElement.classList.add('ios');
+  console.log('[iOS fallback] iOS/iPadOS detected — maxTouchPoints:', navigator.maxTouchPoints);
+}
+
 // ── Startup diagnostics (visible in Safari Web Inspector) ──────────────────
 console.log("[GestureCamera] Startup — UA:", navigator.userAgent);
 console.log("[GestureCamera] crossOriginIsolated:", (window as Window & { crossOriginIsolated?: boolean }).crossOriginIsolated ?? "undefined");
