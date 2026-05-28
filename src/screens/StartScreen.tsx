@@ -1,5 +1,4 @@
-import cityBg from "../../images/start_bg_city.jpg";
-import overlayBg from "../../images/start_bg_overlay.jpg";
+import startBg from "../../images/start_background.png";
 
 interface Props {
   onStart: () => void;
@@ -8,17 +7,11 @@ interface Props {
 export default function StartScreen({ onStart }: Props) {
   return (
     <div className="w-full h-full relative overflow-hidden animate-fade-in" style={{ backgroundColor: "#0d1b22" }}>
-      {/* Layered backgrounds */}
+      {/* Single background — no overlay */}
       <img
-        src={cityBg}
+        src={startBg}
         alt=""
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-      />
-      <img
-        src={overlayBg}
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        style={{ opacity: 0.75 }}
       />
 
       {/* Content — upper portion, mirrors Figma proportions */}
