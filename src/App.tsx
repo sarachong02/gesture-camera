@@ -12,7 +12,15 @@ import ConsentScreen from "./screens/ConsentScreen";
 import ThankYouScreen from "./screens/ThankYouScreen";
 
 export default function App() {
-  const [screen, setScreen] = useState<AppScreen>("start");
+  // TEMP: mirrors the CSS @supports (-webkit-touch-callout:none) check in index.css
+  const [screen, setScreen] = useState<AppScreen>(() => {
+    const ios = CSS.supports('-webkit-touch-callout', 'none');
+    if (ios) {
+      console.log('[iOS fallback] iPad/iOS detected');
+      console.log('[iOS fallback] start screen bypassed → routing to phone');
+    }
+    return ios ? 'phone' : 'start';
+  });
   const [_phoneNumber, setPhoneNumber] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState<FilterId>("no_filter");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
