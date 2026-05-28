@@ -33,7 +33,7 @@ export default function PhoneScreen({ onSubmit }: Props) {
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center animate-fade-in px-6">
-      <div className="flex flex-col items-center w-full max-w-sm gap-8">
+      <div className="flex flex-col items-center w-full max-w-sm md:max-w-md gap-8">
 
         {/* Header */}
         <div className="text-center animate-slide-up">

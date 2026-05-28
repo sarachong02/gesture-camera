@@ -17,12 +17,17 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-image: url('../images/background_img.png');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
     color: #F5EDDE;
     font-family: "Inter", system-ui, sans-serif;
+  }
+
+  /* Global background — rendered via App.tsx <img> for iOS Safari compatibility.
+   * background-attachment: fixed breaks inside overflow:hidden on iOS Safari (WebKit bug). */
+
+  /* iOS Safari: use -webkit-fill-available so the root fills the visible area
+   * without overflowing behind the address bar. */
+  @supports (-webkit-touch-callout: none) {
+    html { height: -webkit-fill-available; }
   }
 }
 

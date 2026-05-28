@@ -9,7 +9,7 @@ export default function ThankYouScreen({ onRestart }: Props) {
     <div className="w-full h-full flex flex-col items-center justify-center animate-fade-in px-8">
       {/* Logo */}
       <div className="relative mb-14">
-        <img src={logo} alt="Logo" style={{ width: 300, height: 300, objectFit: "contain" }} />
+        <img src={logo} alt="Logo" style={{ width: "clamp(180px, 28vmin, 300px)", height: "clamp(180px, 28vmin, 300px)", objectFit: "contain" }} />
       </div>
 
       {/* Headline */}

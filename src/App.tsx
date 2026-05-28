@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { AppScreen, FilterId } from "./types";
+import appBg from "../images/background_img.png";
 import StartScreen from "./screens/StartScreen";
 import PhoneScreen from "./screens/PhoneScreen";
 import FilterScreen from "./screens/FilterScreen";
@@ -38,7 +39,10 @@ export default function App() {
   }
 
   return (
-    <div className="w-full h-full relative overflow-hidden">
+    <div
+      className="w-full h-full relative overflow-hidden"
+      style={{ backgroundImage: `url(${appBg})`, backgroundSize: "cover", backgroundPosition: "center" }}
+    >
       {screen === "start" && (
         <StartScreen onStart={() => setScreen("phone")} />
       )}
