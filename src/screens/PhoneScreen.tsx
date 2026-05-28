@@ -40,7 +40,7 @@ export default function PhoneScreen({ onSubmit }: Props) {
           <h2 className="font-display text-4xl font-normal text-primary mb-2">
             Your Number
           </h2>
-          <p className="text-primary/50 text-sm tracking-wide">
+          <p className="text-primary/70 text-sm tracking-wide">
             We'll text your photo here
           </p>
         </div>
@@ -70,8 +70,8 @@ export default function PhoneScreen({ onSubmit }: Props) {
                   "h-16 rounded-2xl flex items-center justify-center select-none",
                   "transition-all duration-75 active:scale-95",
                   isDel
-                    ? "bg-primary/5 border border-primary/10 text-primary/50 hover:bg-primary/10"
-                    : "bg-primary/8 border border-primary/12 text-primary text-2xl font-light hover:bg-primary/14",
+                    ? "bg-white/10 border border-white/20 text-primary/70 active:bg-white/20"
+                    : "bg-white/10 border border-white/20 text-primary text-2xl font-light active:bg-white/20",
                 ].join(" ")}
               >
                 {isDel ? (
@@ -97,19 +97,20 @@ export default function PhoneScreen({ onSubmit }: Props) {
         </div>
 
         {/* Privacy note */}
-        <p className="text-primary/30 text-xs tracking-wide text-center leading-relaxed animate-slide-up">
+        <p className="text-primary/70 text-xs tracking-wide text-center leading-relaxed animate-slide-up">
           Your photo will be texted to this number and deleted immediately after the session.
         </p>
 
         {/* Continue */}
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!isValid}
-          className="btn btn-primary w-full animate-slide-up"
-        >
-          Continue
-        </button>
+        {isValid && (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="btn btn-primary w-full animate-slide-up"
+          >
+            Continue
+          </button>
+        )}
       </div>
     </div>
   );

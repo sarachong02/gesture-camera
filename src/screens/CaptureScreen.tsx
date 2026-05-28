@@ -1,17 +1,27 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type React from "react";
 import { ThumbsUpIcon, ThumbsDownIcon } from "../components/GestureIcons";
 import { useCamera } from "../hooks/useCamera";
 import { useGestureDetection } from "../hooks/useGestureDetection";
+import type { FilterId } from "../types";
+import logo from "../../images/logo.png";
 
 interface Props {
   imageUrl: string;
+  activeFilter: FilterId;
   onRetake: () => void;
   onSave: () => void;
 }
 
-export default function CaptureScreen({ imageUrl, onRetake, onSave }: Props) {
+const THUMBS_HOLD_MS = 500;
+const ARC_R = 44;
+const ARC_CIRC = 2 * Math.PI * ARC_R;
+
+export default function CaptureScreen({ imageUrl, activeFilter, onRetake, onSave }: Props) {
   const [gestureAction, setGestureAction] = useState<"save" | "retake" | null>(null);
+  const [thumbsProgress, setThumbsProgress] = useState(0);
+  const thumbsStartRef = useRef<number | null>(null);
+  const thumbsRafRef   = useRef<number | null>(null);
 
   const handleSaveRef = useRef<() => void>(null!);
   const onRetakeRef   = useRef<() => void>(null!);
@@ -32,13 +42,31 @@ export default function CaptureScreen({ imageUrl, onRetake, onSave }: Props) {
     gestureState: "waiting",
   });
 
+  const stopThumbsArc = useCallback(() => {
+    if (thumbsRafRef.current) cancelAnimationFrame(thumbsRafRef.current);
+    thumbsStartRef.current = null;
+    setThumbsProgress(0);
+  }, []);
+
   useEffect(() => {
-    if (gestureAction) return;
-    if (gesture !== "thumbs_up" && gesture !== "thumbs_down") return;
-    const action = gesture === "thumbs_up" ? "save" : "retake";
-    const t = setTimeout(() => setGestureAction(action), 500);
-    return () => clearTimeout(t);
-  }, [gesture, gestureAction]);
+    if (gestureAction) { stopThumbsArc(); return; }
+    if (gesture !== "thumbs_up" && gesture !== "thumbs_down") { stopThumbsArc(); return; }
+
+    if (thumbsStartRef.current === null) thumbsStartRef.current = performance.now();
+
+    function tick() {
+      if (!thumbsStartRef.current) return;
+      const p = Math.min((performance.now() - thumbsStartRef.current) / THUMBS_HOLD_MS, 1);
+      setThumbsProgress(p);
+      if (p < 1) {
+        thumbsRafRef.current = requestAnimationFrame(tick);
+      } else {
+        setGestureAction(gesture === "thumbs_up" ? "save" : "retake");
+      }
+    }
+    thumbsRafRef.current = requestAnimationFrame(tick);
+    return () => { if (thumbsRafRef.current) cancelAnimationFrame(thumbsRafRef.current); };
+  }, [gesture, gestureAction, stopThumbsArc]);
 
   useEffect(() => {
     if (!gestureAction) return;
@@ -112,8 +140,35 @@ export default function CaptureScreen({ imageUrl, onRetake, onSave }: Props) {
         </div>
       )}
 
+      {/* Thumbs progress arc */}
+      {!gestureAction && thumbsProgress > 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="relative w-28 h-28">
+            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+              <circle cx="50" cy="50" r={ARC_R} fill="none" stroke="rgba(26,101,123,0.20)" strokeWidth="5" />
+              <circle
+                cx="50" cy="50" r={ARC_R}
+                fill="none"
+                stroke="#1A657B"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeDasharray={ARC_CIRC}
+                strokeDashoffset={ARC_CIRC * (1 - thumbsProgress)}
+                style={{ transition: "stroke-dashoffset 0.05s linear" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              {gesture === "thumbs_up"
+                ? <ThumbsUpIcon className="w-8 h-9 text-white/80" />
+                : <ThumbsDownIcon className="w-8 h-9 text-white/80" />
+              }
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Gesture hint */}
-      {!gestureAction && (
+      {!gestureAction && thumbsProgress === 0 && (
         <div className="absolute bottom-28 left-1/2 -translate-x-1/2">
           <div className="glass rounded-pill px-5 py-2.5 flex items-center gap-4 text-xs tracking-wide">
             <div
@@ -138,10 +193,11 @@ export default function CaptureScreen({ imageUrl, onRetake, onSave }: Props) {
       )}
 
       {/* Action bar — manual fallback buttons */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4">
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-8">
         <button
           onClick={onRetake}
-          className="glass-dark px-8 py-3 rounded-pill text-white/70 text-2xl tracking-widest uppercase hover:bg-white/10 transition-all duration-200"
+          className="btn"
+          style={{ background: "rgba(255,255,255,0.10)", borderColor: "rgba(255,255,255,0.20)", padding: "12px 28px" }}
         >
           Retake
         </button>
@@ -161,6 +217,22 @@ export default function CaptureScreen({ imageUrl, onRetake, onSave }: Props) {
           Photo captured
         </p>
       </div>
+
+      {/* Watermark logo (no filter only) */}
+      {activeFilter === "no_filter" && (
+        <img
+          src={logo}
+          alt=""
+          aria-hidden
+          className="absolute pointer-events-none"
+          style={{
+            bottom: "clamp(16px, 3vw, 32px)",
+            right: "clamp(16px, 3vw, 32px)",
+            width: "clamp(160px, 18vw, 260px)",
+            opacity: 0.75,
+          }}
+        />
+      )}
     </div>
   );
 }

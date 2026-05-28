@@ -1,6 +1,6 @@
 export type AppScreen = "start" | "phone" | "filter" | "tutorial" | "camera_gate" | "camera" | "capture" | "consent" | "thankyou";
 
-export type FilterId = "no_filter" | "jellyfish" | "orca" | "harbor_seal" | "geoduck_clam" | "giant_pacific_octopus";
+export type FilterId = "no_filter" | "jellyfish" | "orca" | "harbor_seal" | "salmon";
 
 export interface FilterOption {
   id: FilterId;
@@ -11,8 +11,7 @@ export const FILTERS: FilterOption[] = [
   { id: "no_filter", label: "No Filter" },
   { id: "orca", label: "Orca" },
   { id: "harbor_seal", label: "Harbor Seal" },
-  { id: "geoduck_clam", label: "Geoduck Clam" },
-  { id: "giant_pacific_octopus", label: "Giant Pacific Octopus" },
+  { id: "salmon", label: "Salmon" },
 ];
 
 export type GestureState =

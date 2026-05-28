@@ -2,11 +2,13 @@ import type { FilterId } from "./types";
 import orcaOverlay from "../images/orca_background.png";
 import sealOverlay from "../images/seal_background.png";
 import jellyfishOverlay from "../images/jellyfish_background.PNG";
+import salmonOverlay from "../images/salmon_background.png";
 
 export const FILTER_OVERLAYS: Partial<Record<FilterId, string>> = {
   orca: orcaOverlay,
   harbor_seal: sealOverlay,
   jellyfish: jellyfishOverlay,
+  salmon: salmonOverlay,
 };
 
 export async function compositeWithOverlay(

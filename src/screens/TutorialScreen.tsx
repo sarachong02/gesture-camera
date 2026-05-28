@@ -177,7 +177,7 @@ export default function TutorialScreen({ onComplete, onSkip }: Props) {
           <h2 className="font-display text-3xl font-normal text-primary">
             {current.title}
           </h2>
-          <p className="text-primary/60 text-base leading-relaxed">
+          <p className="text-primary/70 text-base leading-relaxed">
             {current.description}
           </p>
         </div>

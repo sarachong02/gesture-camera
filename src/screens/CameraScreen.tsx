@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type React from "react";
 import type { FilterId, GestureState, PalmPosition } from "../types";
+import logo from "../../images/logo.png";
 import { useCamera } from "../hooks/useCamera";
 import { useGestureDetection } from "../hooks/useGestureDetection";
 import CountdownOverlay from "../components/CountdownOverlay";
@@ -176,7 +177,7 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
               <circle
                 cx="50" cy="50" r="44"
                 fill="none"
-                stroke="#B5D7C5"
+                stroke="#1A657B"
                 strokeWidth="5"
                 strokeLinecap="round"
                 strokeDasharray={`${2 * Math.PI * 44}`}
@@ -204,6 +205,22 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
           gesture={gesture}
           gestureState={gestureState}
           peaceSignProgress={peaceSignProgress}
+        />
+      )}
+
+      {/* ── Logo watermark (no filter mode only) ──────────────────────────── */}
+      {activeFilter === "no_filter" && (
+        <img
+          src={logo}
+          alt=""
+          aria-hidden
+          className="absolute pointer-events-none"
+          style={{
+            bottom: "clamp(16px, 3vw, 32px)",
+            right: "clamp(16px, 3vw, 32px)",
+            width: "clamp(160px, 18vw, 260px)",
+            opacity: 0.75,
+          }}
         />
       )}
     </div>

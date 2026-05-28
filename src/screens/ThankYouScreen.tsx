@@ -1,24 +1,15 @@
-export default function ThankYouScreen() {
+import logo from "../../images/logo.png";
+
+interface Props {
+  onRestart: () => void;
+}
+
+export default function ThankYouScreen({ onRestart }: Props) {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center animate-fade-in px-8">
-      {/* Ferry icon */}
+      {/* Logo */}
       <div className="relative mb-14">
-        <div className="w-24 h-24 rounded-full border border-primary/20 flex items-center justify-center">
-          <svg
-            className="w-11 h-11 text-primary/50"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 17H3l1.5-5H6m12 5h3l-1.5-5H18m-12 0h12m-9-5V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2m-4 0h4M3 20h18"
-            />
-          </svg>
-        </div>
-        <div className="absolute inset-0 rounded-full border border-primary/10 animate-pulse-ring" />
+        <img src={logo} alt="Logo" style={{ width: 300, height: 300, objectFit: "contain" }} />
       </div>
 
       {/* Headline */}
@@ -27,16 +18,25 @@ export default function ThankYouScreen() {
         <br />
         <span className="text-primary-dark">Washington State Ferry</span>
         <br />
-        Photo Taker!
+        Photo Spot!
       </h1>
 
       {/* Divider */}
       <div className="w-12 h-px bg-primary/20 mb-6 animate-slide-up" />
 
       {/* Instruction */}
-      <p className="text-primary/50 text-sm tracking-wide text-center max-w-xs leading-relaxed animate-slide-up">
-        Navigate to a bulletin wall and share your memories!
+      <p className="text-primary/70 text-sm tracking-wide text-center max-w-xs leading-relaxed animate-slide-up">
+        Check your text messages for your image
       </p>
+
+      {/* Restart */}
+      <button
+        type="button"
+        onClick={onRestart}
+        className="btn btn-primary animate-slide-up mt-8"
+      >
+        Restart
+      </button>
 
       {/* Wave decoration */}
       <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none">

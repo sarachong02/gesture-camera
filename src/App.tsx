@@ -70,6 +70,7 @@ export default function App() {
       {screen === "capture" && capturedImage && (
         <CaptureScreen
           imageUrl={capturedImage}
+          activeFilter={activeFilter}
           onRetake={handleRetake}
           onSave={() => setScreen("consent")}
         />
@@ -82,7 +83,15 @@ export default function App() {
           }}
         />
       )}
-      {screen === "thankyou" && <ThankYouScreen />}
+      {screen === "thankyou" && (
+        <ThankYouScreen onRestart={() => {
+          setPhoneNumber("");
+          setActiveFilter("no_filter");
+          setCapturedImage(null);
+          setConsentGiven(null);
+          setScreen("start");
+        }} />
+      )}
     </div>
   );
 }

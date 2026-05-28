@@ -597,6 +597,106 @@ Additionally, the inline `style={{ fontSize: 14 }}` override was removed from `C
 
 ---
 
+## Handoff — 2026-05-28 (Session 9)
+
+### What was worked on
+
+UI polish pass: logo watermark, filter list cleanup, phone keypad styling, gesture progress arcs for thumbs gestures, and Thank You screen copy/flow updates.
+
+---
+
+#### Change 1 — No Filter logo watermark
+
+`logo.png` is now shown as a bottom-right watermark whenever "No Filter" is the active filter. It appears on both the live `CameraScreen` and the `CaptureScreen` review so the watermark is visible in the saved photo context.
+
+- Position uses `clamp()` for both size (`clamp(160px, 18vw, 260px)`) and inset offsets — responsive across screen sizes.
+- `CaptureScreen` received a new `activeFilter: FilterId` prop (passed from `App.tsx`) to know when to show the watermark.
+
+**Key files changed:**
+- `src/screens/CameraScreen.tsx` — logo overlay added inside `activeFilter === "no_filter"` guard
+- `src/screens/CaptureScreen.tsx` — `activeFilter` prop added; matching logo overlay added
+- `src/App.tsx` — `activeFilter` passed to `CaptureScreen`
+
+---
+
+#### Change 2 — Filter list updated
+
+Removed the two placeholder filters and added Salmon (which has a real background image).
+
+- `FilterId` union type: `"geoduck_clam"` and `"giant_pacific_octopus"` removed; `"salmon"` added.
+- `FILTERS` constant updated to match.
+- `salmon_background.png` imported and mapped in `FILTER_OVERLAYS` — wired identically to orca/seal (live preview + capture composite).
+- `FILTER_EMOJI` in `FilterScreen` updated: geoduck/octopus entries removed, salmon mapped to 🐟.
+
+**Key files changed:**
+- `src/types.ts`
+- `src/filterOverlays.ts`
+- `src/screens/FilterScreen.tsx`
+
+---
+
+#### Change 3 — Phone screen: hide Continue + keypad style
+
+- **Continue button hidden** (not just disabled) until 10 numeric digits are entered. Changed from `disabled={!isValid}` to `{isValid && <button>}` conditional render — button is fully absent from the DOM when invalid.
+- **Keypad buttons** changed from `bg-primary/8` (teal tint) to `bg-white/10` with `border-white/20`. Active/pressed state changed to `active:bg-white/20` — matches the frosted glass aesthetic and gives tactile press feedback without hover states.
+
+**Key files changed:**
+- `src/screens/PhoneScreen.tsx`
+
+---
+
+#### Change 4 — Gesture progress arcs for thumbs up / down
+
+The peace sign arc pattern (hold → fill arc → confirm) is now applied to thumbs gestures on `CaptureScreen`.
+
+- `THUMBS_HOLD_MS = 500`. On thumbs up or down detection, a `requestAnimationFrame` loop updates `thumbsProgress` (0–1) over 500 ms. When progress reaches 1, `gestureAction` is set directly — the previous `setTimeout` approach is replaced.
+- An SVG arc (same geometry as the peace sign arc, color `#1A657B`) renders centered on screen while the hold is in progress. The appropriate `ThumbsUpIcon` or `ThumbsDownIcon` is shown at its center.
+- The gesture hint pill is hidden while the arc is showing; the arc is hidden once `gestureAction` is set and the success overlay takes over.
+- `stopThumbsArc` cleanup callback cancels the rAF and resets progress when the gesture is released or an action fires.
+
+**Key files changed:**
+- `src/screens/CaptureScreen.tsx` — `thumbsProgress` state; `thumbsStartRef`/`thumbsRafRef`; `stopThumbsArc`; arc JSX; gesture hint gated on `thumbsProgress === 0`
+
+---
+
+#### Change 5 — Peace sign arc color
+
+Progress arc stroke color changed from `#B5D7C5` (seafoam mint) to `#1A657B` (ocean teal) to match the thumbs arcs and the primary brand color.
+
+**Key files changed:**
+- `src/screens/CameraScreen.tsx`
+
+---
+
+#### Change 6 — Thank You screen updates
+
+- **Header copy**: "Photo Taker!" → "Photo Spot!"
+- **Subheading copy**: "Navigate to a bulletin wall and share your memories!" → "Check your text messages for your image"
+- **Restart button** added — calls `onRestart` prop, which resets all session state (`phoneNumber`, `activeFilter`, `capturedImage`, `consentGiven`) and returns to `"start"`. ThankYouScreen now accepts an `onRestart: () => void` prop.
+- Logo size increased to 300×300px.
+
+**Key files changed:**
+- `src/screens/ThankYouScreen.tsx`
+- `src/App.tsx` — `onRestart` handler + prop passed to `ThankYouScreen`
+
+---
+
+### Updated start flow
+
+```
+Start → Phone number → Filter selection → Tutorial (5 gesture steps) → Camera gate (thumbs up) → Camera → Capture (thumbs up/down arc) → Consent → Thank You → [Restart] → Start
+```
+
+---
+
+### Suggested next steps
+
+- The No Filter watermark is a UI overlay only — it is not composited into the downloaded image file. If the watermark needs to appear in the actual saved JPEG, `compositeWithOverlay` (already used for filter borders) could be called with `logo.png` as the overlay, positioned via canvas transforms rather than a full-frame cover.
+- The Restart button on the Thank You screen resets to the Start screen. If kiosk usage requires an automatic timeout reset (e.g., return to Start after 30 s of inactivity), a `useEffect` with `setTimeout` on `ThankYouScreen` mount could call `onRestart` without user interaction.
+- The QR-unlocked jellyfish filter resets on each session restart (React state). If it should persist across sessions within a single kiosk deployment, a `sessionStorage` flag keyed on the QR scan event would survive the Restart without requiring a full page reload.
+
+---
+
 ## Handoff — 2026-05-28 (Session 8)
 
 ### What was worked on
@@ -666,6 +766,15 @@ Consent-specific styling:
 ---
 
 ## Changelog
+
+### 2026-05-28 (Session 9)
+
+- **No Filter watermark** — `logo.png` shown at bottom-right on `CameraScreen` and `CaptureScreen` when No Filter is active. Responsive size via `clamp()`. `CaptureScreen` gained an `activeFilter` prop to support this.
+- **Salmon filter added** — `salmon_background.png` wired as a real filter (live preview + composite on capture). Geoduck Clam and Giant Pacific Octopus placeholders removed.
+- **Phone screen Continue hidden** — button is absent from DOM until 10 digits are entered (was `disabled`). Keypad buttons restyled to `bg-white/10` with `active:bg-white/20` press feedback.
+- **Thumbs gesture progress arcs** — thumbs up/down on `CaptureScreen` now show a circular hold arc (500 ms, `#1A657B`) matching the peace sign arc pattern. Arc drives the action directly via rAF loop; gesture hint pill hidden while arc is showing.
+- **Peace sign arc color** — changed from `#B5D7C5` to `#1A657B` for consistency with thumbs arcs.
+- **Thank You screen** — header updated to "Photo Spot!", subheading to "Check your text messages for your image". Restart button added; resets all session state and returns to Start screen. Logo increased to 300×300px.
 
 ### 2026-05-28 (Session 8)
 

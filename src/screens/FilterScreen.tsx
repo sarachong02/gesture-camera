@@ -16,8 +16,7 @@ const FILTER_EMOJI: Record<FilterId, string> = {
   jellyfish: "🪼",
   orca: "🐋",
   harbor_seal: "🦭",
-  geoduck_clam: "🐚",
-  giant_pacific_octopus: "🐙",
+  salmon: "🐟",
 };
 
 export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }: Props) {

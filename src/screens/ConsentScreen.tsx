@@ -43,10 +43,10 @@ export default function ConsentScreen({ onConsent }: Props) {
       <div className="w-12 h-px bg-white/20 mb-6 animate-slide-up" />
 
       {/* Subheading + body */}
-      <p className="text-white text-sm tracking-wide text-center max-w-xs leading-relaxed animate-slide-up">
+      <p className="text-white/70 text-sm tracking-wide text-center max-w-xs leading-relaxed animate-slide-up">
         Share your memories on the digital photo wall located on the ferry
       </p>
-      <p className="text-white text-sm tracking-wide text-center max-w-xs leading-relaxed animate-slide-up mt-3 mb-10">
+      <p className="text-white/70 text-sm tracking-wide text-center max-w-xs leading-relaxed animate-slide-up mt-3 mb-10">
         The photo will stay up for 48 hours, and then will be erased.
       </p>
 
