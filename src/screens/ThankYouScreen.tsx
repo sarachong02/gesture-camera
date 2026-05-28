@@ -6,7 +6,7 @@ interface Props {
 
 export default function ThankYouScreen({ onRestart }: Props) {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center animate-fade-in px-8">
+    <div className="w-full h-full flex flex-col items-center justify-center animate-fade-in px-8" style={{ backgroundColor: "#0d1b22" }}>
       {/* Logo */}
       <div className="relative mb-14">
         <img src={logo} alt="Logo" style={{ width: "clamp(180px, 28vmin, 300px)", height: "clamp(180px, 28vmin, 300px)", objectFit: "contain" }} />

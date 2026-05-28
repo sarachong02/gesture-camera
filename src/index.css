@@ -19,10 +19,14 @@
     overflow: hidden;
     color: #F5EDDE;
     font-family: "Inter", system-ui, sans-serif;
+    /* Dark fallback — ensures sand/white text is always legible if a
+     * background image is slow to load or fails to render on iOS Safari. */
+    background-color: #0d1b22;
   }
 
-  /* Global background — rendered via App.tsx <img> for iOS Safari compatibility.
-   * background-attachment: fixed breaks inside overflow:hidden on iOS Safari (WebKit bug). */
+  /* Global background is rendered via an <img> element in App.tsx (not CSS background-image).
+   * CSS background-size:cover inside overflow:hidden renders unreliably on iOS Safari.
+   * background-attachment:fixed is also broken on iOS Safari inside overflow:hidden. */
 
   /* iOS Safari: use -webkit-fill-available so the root fills the visible area
    * without overflowing behind the address bar. Apply to both html and body

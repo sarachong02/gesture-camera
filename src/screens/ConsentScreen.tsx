@@ -6,7 +6,7 @@ interface Props {
 
 export default function ConsentScreen({ onConsent }: Props) {
   return (
-    <div className="w-full h-full relative flex flex-col items-center justify-center animate-fade-in px-8">
+    <div className="w-full h-full relative flex flex-col items-center justify-center animate-fade-in px-8" style={{ backgroundColor: "#0d1b22" }}>
       {/* Background — photo wall image */}
       <img
         src={photoWallBg}

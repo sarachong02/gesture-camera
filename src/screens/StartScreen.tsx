@@ -7,7 +7,7 @@ interface Props {
 
 export default function StartScreen({ onStart }: Props) {
   return (
-    <div className="w-full h-full relative overflow-hidden animate-fade-in">
+    <div className="w-full h-full relative overflow-hidden animate-fade-in" style={{ backgroundColor: "#0d1b22" }}>
       {/* Layered backgrounds */}
       <img
         src={cityBg}

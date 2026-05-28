@@ -39,10 +39,17 @@ export default function App() {
   }
 
   return (
-    <div
-      className="w-full h-full relative overflow-hidden"
-      style={{ backgroundImage: `url(${appBg})`, backgroundSize: "cover", backgroundPosition: "center" }}
-    >
+    // backgroundColor provides an immediate dark fallback so text (sand/white) is
+    // always readable even before the background image loads or if it fails.
+    // The <img> replaces CSS background-image: iOS Safari has a known WebKit bug
+    // where background-size:cover inside overflow:hidden doesn't render reliably.
+    <div className="w-full h-full relative overflow-hidden" style={{ backgroundColor: "#0d1b22" }}>
+      <img
+        src={appBg}
+        alt=""
+        aria-hidden
+        className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+      />
       {screen === "start" && (
         <StartScreen onStart={() => setScreen("phone")} />
       )}
