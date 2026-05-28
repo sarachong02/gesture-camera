@@ -111,6 +111,7 @@ export default function CameraScreen({ activeFilter, onCapture }: Props) {
           className="w-full h-full object-cover"
           style={{ transform: "scaleX(-1)" }}
           playsInline
+          autoPlay
           muted
         />
         <HandOverlay

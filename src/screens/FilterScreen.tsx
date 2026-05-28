@@ -57,6 +57,7 @@ export default function FilterScreen({ activeFilter, onFilterChange, onConfirm }
         className="w-full h-full object-cover"
         style={{ transform: "scaleX(-1)" }}
         playsInline
+        autoPlay
         muted
       />
 

@@ -29,6 +29,7 @@ export default function CameraGateScreen({ onEnter }: Props) {
             className="w-full h-full object-cover"
             style={{ transform: "scaleX(-1)" }}
             playsInline
+            autoPlay
             muted
           />
 

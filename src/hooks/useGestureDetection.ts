@@ -200,20 +200,29 @@ export function useGestureDetection({
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
         );
-        const landmarker = await HandLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath:
-              "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-            delegate: "GPU",
-          },
-          runningMode: "VIDEO",
+        const MODEL_PATH =
+          "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+        const COMMON_OPTIONS = {
+          runningMode: "VIDEO" as const,
           // Track up to 2 hands so we can pick the locked one when multiple people are in frame.
-          // Gesture classification still only uses one (the tracked hand).
           numHands: 2,
           minHandDetectionConfidence: 0.5,
           minHandPresenceConfidence: 0.5,
           minTrackingConfidence: 0.5,
-        });
+        };
+        // Try GPU delegate first; fall back to CPU if GPU is unavailable (common on iOS Safari).
+        let landmarker;
+        try {
+          landmarker = await HandLandmarker.createFromOptions(vision, {
+            baseOptions: { modelAssetPath: MODEL_PATH, delegate: "GPU" },
+            ...COMMON_OPTIONS,
+          });
+        } catch {
+          landmarker = await HandLandmarker.createFromOptions(vision, {
+            baseOptions: { modelAssetPath: MODEL_PATH, delegate: "CPU" },
+            ...COMMON_OPTIONS,
+          });
+        }
         if (!cancelled) {
           landmarkerRef.current = landmarker;
           setIsLoading(false);

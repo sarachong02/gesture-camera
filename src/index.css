@@ -25,9 +25,10 @@
    * background-attachment: fixed breaks inside overflow:hidden on iOS Safari (WebKit bug). */
 
   /* iOS Safari: use -webkit-fill-available so the root fills the visible area
-   * without overflowing behind the address bar. */
+   * without overflowing behind the address bar. Apply to both html and body
+   * so the 100% height chain resolves to the visible viewport. */
   @supports (-webkit-touch-callout: none) {
-    html { height: -webkit-fill-available; }
+    html, body { height: -webkit-fill-available; }
   }
 }
 

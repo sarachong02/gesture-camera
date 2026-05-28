@@ -92,6 +92,7 @@ export default function CaptureScreen({ imageUrl, activeFilter, onRetake, onSave
         ref={videoRef as React.RefObject<HTMLVideoElement>}
         className="absolute opacity-0 pointer-events-none w-px h-px"
         playsInline
+        autoPlay
         muted
       />
 

@@ -122,6 +122,7 @@ export default function TutorialScreen({ onComplete, onSkip }: Props) {
             className="w-full h-full object-cover"
             style={{ transform: "scaleX(-1)" }}
             playsInline
+            autoPlay
             muted
           />
 

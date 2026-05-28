@@ -51,18 +51,28 @@ export function useThumbsUpDetection({ videoRef, onDetected }: Options): Result 
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
         );
-        const landmarker = await HandLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath:
-              "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-            delegate: "GPU",
-          },
-          runningMode: "VIDEO",
+        const MODEL_PATH =
+          "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+        const COMMON_OPTIONS = {
+          runningMode: "VIDEO" as const,
           numHands: 1,
           minHandDetectionConfidence: 0.5,
           minHandPresenceConfidence: 0.5,
           minTrackingConfidence: 0.5,
-        });
+        };
+        // Try GPU first; fall back to CPU on iOS Safari where GPU delegate may be unavailable.
+        let landmarker;
+        try {
+          landmarker = await HandLandmarker.createFromOptions(vision, {
+            baseOptions: { modelAssetPath: MODEL_PATH, delegate: "GPU" },
+            ...COMMON_OPTIONS,
+          });
+        } catch {
+          landmarker = await HandLandmarker.createFromOptions(vision, {
+            baseOptions: { modelAssetPath: MODEL_PATH, delegate: "CPU" },
+            ...COMMON_OPTIONS,
+          });
+        }
         if (!cancelled) {
           landmarkerRef.current = landmarker;
           setIsLoading(false);
